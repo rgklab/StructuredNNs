@@ -1,2 +1,1 @@
-# structurednns
-Structured Neural Networks
+# Structured Neural Networks for Density Estimation
