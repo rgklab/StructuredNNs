@@ -30,14 +30,14 @@ class StrNN(pl.LightningModule):
     Main neural network class that implements a Structured Neural Network
     Can also become a MADE or Zuko masked NN by specifying the opt_type flag
     """
-    def __init__(self,
-        nin: int, hidden_sizes: tuple[int, ...], nout: int,
-        opt_type: str='greedy',
-        opt_args={'var_penalty_weight': 0.0},
-        precompute_masks=None,
-        adjacency=None,
-        activation='relu'
-        ):
+    def __init__(
+            self,
+            nin: int, hidden_sizes: tuple[int, ...], nout: int,
+            opt_type: str = 'greedy',
+            opt_args: dict = {'var_penalty_weight': 0.0},
+            precompute_masks: np.array = None,
+            adjacency: np.array = None,
+            activation: str = 'relu'):
         """
         Initializes a Structured Neural Network (StrNN)
         :param nin:
@@ -117,7 +117,7 @@ class StrNN(pl.LightningModule):
         for layer, mask in zip(layers, self.masks):
             layer.set_mask(mask)
 
-    def factorize_masks(self) -> list[np.ndarray,...]:
+    def factorize_masks(self) -> list[np.ndarray]:
         """
         Factorize the given adjacency structure into per-layer masks.
         We use a recursive approach here for efficiency and simplicity.
@@ -125,7 +125,7 @@ class StrNN(pl.LightningModule):
         This order matches how the masks are assigned to the networks in MADE.
         """
         masks = []
-        adj_mtx = np.copy(A)
+        adj_mtx = np.copy(self.A)
 
         # TODO: We need to handle default None case (maybe init an FC layer?)
 
@@ -178,8 +178,7 @@ class StrNN(pl.LightningModule):
     def factorize_single_mask_MADE(self):
         return None, None
 
-    # TODO: Specify return type
-    def check_masks(self):
+    def check_masks(self) -> bool:
         """
         Given the model's masks, [M1.T, M2.T, ..., Mk.T],
         check if the matrix product Mk*...*M2*M1 respects A's
@@ -191,7 +190,7 @@ class StrNN(pl.LightningModule):
             mask_prod = mask_prod @ self.masks[i]
         mask_prod = mask_prod.T
 
-        constraint = (mask_prod > 0.0001) * 1. - A
+        constraint = (mask_prod > 0.0001) * 1. - self.A
         if np.any(constraint != 0.):
             return False
         else:
