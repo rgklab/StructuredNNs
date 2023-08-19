@@ -4,6 +4,8 @@ import torch.nn.functional as F
 import numpy as np
 import pytorch_lightning as pl
 
+from .model_utils import NONLINEARITIES
+
 
 class MaskedLinear(nn.Linear):
     """
@@ -60,11 +62,9 @@ class StrNN(pl.LightningModule):
         self.A = adjacency
 
         # Define activation
-        if activation == 'relu':
-            self.activation = nn.ReLU()
-        elif activation == 'softplus':
-            self.activation = nn.Softplus()
-        else:
+        try:
+            self.activation = NONLINEARITIES[activation]
+        except ValueError:
             raise ValueError(f"{activation} is not a valid activation!")
 
         # Define StrNN network
@@ -126,6 +126,13 @@ class StrNN(pl.LightningModule):
         """
         masks = []
         adj_mtx = np.copy(A)
+
+        # TODO: We need to handle default None case (maybe init an FC layer?)
+
+        if self.opt_type == 'Zuko':
+            raise NotImplementedError
+            masks = self.factorize_masks_zuko(adj_mtx)
+
         for l in self.hidden_sizes:
             if self.opt_type == 'greedy':
                 (M1, M2) = self.factorize_single_mask_greedy(adj_mtx, l)
