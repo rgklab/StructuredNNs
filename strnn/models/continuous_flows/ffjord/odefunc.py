@@ -1,8 +1,3 @@
-"""
-Local copy of FFJORD's odefunc.py file. Select file is copied from:
-https://github.com/rtqichen/ffjord/blob/master/lib/layers/odefunc.py
-as FFJORD is unavailable as a package.
-"""
 import torch
 import torch.nn as nn
 
@@ -38,11 +33,11 @@ class DivergenceFunction():
         return approx_tr_dzdx
 
 
-def sample_gaussian_like(y: torch.Tensor) -> torch.Tensor:
-    return torch.randn_like(y)
-
-
 class ODEfunc(nn.Module):
+    """
+    Local copy of FFJORD's odefunc.py as FFJORD is unavailable as a package.
+    https://github.com/rtqichen/ffjord/blob/master/lib/layers/odefunc.py
+    """
     def __init__(self, diffeq: nn.Module, divergence_fn: str = "approximate"):
         super().__init__()
 
@@ -65,7 +60,7 @@ class ODEfunc(nn.Module):
 
         # Sample and fix the noise.
         if self._e is None:
-            self._e = sample_gaussian_like(y)
+            self._e = torch.randn_like(y)
 
         with torch.set_grad_enabled(True):
             y.requires_grad_(True)

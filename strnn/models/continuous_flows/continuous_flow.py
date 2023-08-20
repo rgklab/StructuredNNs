@@ -1,5 +1,4 @@
 import torch
-import torch.nn as nn
 
 from ..normalizing_flow import NormalizingFlow
 from ..config_constants import *

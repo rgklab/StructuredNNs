@@ -1,26 +1,37 @@
-"""
-Local copy of FFJORD's cnf.py file. Select file is copied from:
-https://github.com/rtqichen/ffjord/blob/master/lib/layers/cnf.py
-as FFJORD is unavailable as a package.
-"""
 import torch
 import torch.nn as nn
 
-from torchdiffeq import odeint_adjoint as odeint
+from torchdiffeq import odeint_adjoint as odeint  # type: ignore
 
 from ....models import TTuple
+from .odefunc import ODEfunc
 
 
 class CNF(nn.Module):
+    """
+    Local copy of FFJORD's cnf.py as FFJORD is unavailable as a package.
+    See: https://github.com/rtqichen/ffjord/blob/master/lib/layers/cnf.p
+    """
+    sqrt_end_time: torch.Tensor
+
     def __init__(
             self,
-            odefunc: nn.Module,
+            odefunc: ODEfunc,
             T: float = 1.0,
             train_T: bool = False,
             solver: str = 'dopri5',
             atol: float = 1e-5,
             rtol: float = 1e-5):
-        """Initializes a FFJORD CNF."""
+        """Initializes a FFJORD CNF.
+
+        Args:
+            odefunc: Dynamics function.
+            T: End time of integration.
+            train_T: Treats T as a trainable parameter.
+            solver: ODE solver to use.
+            atol: ODE solver absolute tolerance.
+            rtol: ODE solver relative tolerance.
+        """
         super().__init__()
         if train_T:
             t_param = nn.Parameter(torch.sqrt(torch.tensor(T)))
@@ -46,7 +57,7 @@ class CNF(nn.Module):
         Args:
             z: Input data.
             logpz: Accumulated jacobian term.
-            reverse: Direction of flow.
+            reverse: Flips times of integration.
         """
         if logpz is None:
             _logpz = torch.zeros(z.shape[0], 1).to(z)
@@ -57,9 +68,8 @@ class CNF(nn.Module):
         integration_times = torch.tensor(times).to(z)
 
         if reverse:
-            integration_times = _flip(integration_times, 0)
+            integration_times = torch.flip(integration_times, (0,))
 
-        # Refresh the odefunc statistics.
         self.odefunc.before_odeint()
 
         state_t = odeint(
@@ -77,10 +87,3 @@ class CNF(nn.Module):
 
         z_t, logpz_t = state_t[:2]
         return z_t, logpz_t
-
-
-def _flip(x: torch.Tensor, dim: int) -> torch.Tensor:
-    indices = [slice(None)] * x.dim()
-    indices[dim] = torch.arange(x.size(dim) - 1, -1, -1,
-                                dtype=torch.long, device=x.device)
-    return x[tuple(indices)]

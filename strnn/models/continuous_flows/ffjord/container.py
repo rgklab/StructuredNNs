@@ -1,8 +1,3 @@
-"""
-Local copy of FFJORD's container.py file. Select file is copied from:
-https://github.com/rtqichen/ffjord/blob/master/lib/layers/container.py
-as FFJORD is unavailable as a package.
-"""
 import torch
 import torch.nn as nn
 
@@ -12,16 +7,16 @@ from ....models import TTuple
 
 
 class SequentialFlow(nn.Module):
-    """A generalized nn.Sequential container for normalizing flows."""
-
+    """
+    Local copy of FFJORD's cnf.py as FFJORD is unavailable as a package.
+    See: https://github.com/rtqichen/ffjord/blob/master/lib/layers/container.py
+    """
     def __init__(self, layersList: list[CNF]):
         super().__init__()
         self.chain = nn.ModuleList(layersList)
 
     def forward(self, x: torch.Tensor, reverse: bool = False) -> TTuple:
         """Compute forward pass of stacked CNF layers.
-
-        Modified for simplicity to always initialize logpx to zero.
 
         Args:
             x: Input data.
