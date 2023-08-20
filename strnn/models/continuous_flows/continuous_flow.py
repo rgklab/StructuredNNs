@@ -4,22 +4,24 @@ import torch.nn as nn
 from ..normalizing_flow import NormalizingFlow
 from ..config_constants import *
 
-from .odenets import WeilbachSparseODENet, FCODEnet, StrODENet
+from .odenets import WeilbachSparseODENet, FCODEnet, StrODENet, ODENet
 
 from .ffjord.cnf import CNF
 from .ffjord.container import SequentialFlow
 from .ffjord.odefunc import ODEfunc
 
+from ...models import TTuple
+
 
 class ContinuousFlow(NormalizingFlow):
-    def __init__(self, ffjord_cnf: CNF):
+    def __init__(self, ffjord_cnf: SequentialFlow):
         super().__init__()
         self.model = ffjord_cnf
 
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> TTuple:
         return self.model(x, reverse=False)
 
-    def invert(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def invert(self, z: torch.Tensor) -> TTuple:
         return self.model(z, reverse=True)
 
 
@@ -49,21 +51,19 @@ class ContinuousFlowFactory():
         self.rtol = args[ODE_SOLVER_RTOL]
         self.step_size = args[ODE_SOLVER_STEP]
 
-        self.rademacher = args[ODE_RADE]
-        self.residual = args[ODE_RES]
-
         self.flow_steps = args[FLOW_STEPS]
 
     def get_config(self):
         """Returns all arguments used in model construction for logging."""
         raise NotImplementedError
 
-    def build_odenet(self) -> nn.Module:
+    def build_odenet(self) -> ODENet:
         """Constructs neural network used to model ODE dynamics function.
 
         Return:
             Neural network used to parameterize ODE dynamics.
         """
+        net: ODENet | None = None
         if self.lin_type == "weilbach":
             net = WeilbachSparseODENet(
                 self.input_dim,
@@ -81,11 +81,10 @@ class ContinuousFlowFactory():
             net = StrODENet(
                 self.input_dim,
                 self.hidden_dim,
-                self.input_dim,
+                self.act_type,
                 self.opt_type,
                 self.opt_args,
-                adjacency=self.adj_mat,
-                activation=self.act_type
+                self.adj_mat,
             )
         else:
             raise ValueError("Unknown ODENet type.")
@@ -128,9 +127,6 @@ class ContinuousFlowFactory():
                 module.solver = self.solver
                 module.atol = self.atol
                 module.rtol = self.rtol
-                module.test_solver = self.solver
-                module.test_atol = self.atol
-                module.test_rtol = self.rtol
 
                 if self.step_size is not None:
                     module.solver_options["step_size"] = self.step_size
@@ -138,10 +134,6 @@ class ContinuousFlowFactory():
                 # If using fixed-grid adams, restrict order to not be too high.
                 if self.solver in ["fixed_adams", "explicit_adams"]:
                     module.solver_options["max_order"] = 4
-
-            if isinstance(module, ODEfunc):
-                module.rademacher = self.rademacher
-                module.residual = self.residual
 
         model.apply(_set)
 

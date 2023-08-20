@@ -1,6 +1,6 @@
+from typing import Union, Tuple
+import numpy as np
+import torch
 
-from typing import Union
-from torch import Tensor
-from numpy import array
-
-Array_like = Union[Tensor, array]
+Array_like = Union[torch.Tensor, np.ndarray]
+TTuple = Tuple[torch.Tensor, torch.Tensor]

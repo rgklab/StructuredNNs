@@ -17,7 +17,7 @@ A = np.array(
 )
 
 input_dim = A.shape[0]
-hidden_dim = [25, 25, 25]
+hidden_dim = (25, 25, 25)
 act_type = "tanh"
 
 opt_type = "greedy"
@@ -62,11 +62,10 @@ def test_strode():
     odenet = StrODENet(
         input_dim,
         hidden_dim,
-        input_dim,
+        act_type,
         opt_type,
         opt_args,
-        adjacency=A,
-        activation=act_type
+        A
     )
     output = odenet(rand_t, rand_in)
     assert output.shape == rand_in.shape

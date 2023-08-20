@@ -12,15 +12,15 @@ class MaskedLinear(nn.Linear):
     A linear neural network layer, except with a configurable
     binary mask on the weights
     """
-    def __init__(self, in_features, out_features):
+    def __init__(self, in_features: int, out_features: int):
         super().__init__(in_features, out_features)
         # register_buffer used for non-parameter variables in the model
         self.register_buffer('mask', torch.ones(out_features, in_features))
 
-    def set_mask(self, mask):
+    def set_mask(self, mask: np.ndarray):
         self.mask.data.copy_(torch.from_numpy(mask.astype(np.uint8).T))
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         # * is element-wise multiplication in numpy
         return F.linear(input, self.mask * self.weight, self.bias)
 
@@ -35,8 +35,8 @@ class StrNN(pl.LightningModule):
             nin: int, hidden_sizes: tuple[int, ...], nout: int,
             opt_type: str = 'greedy',
             opt_args: dict = {'var_penalty_weight': 0.0},
-            precompute_masks: np.array = None,
-            adjacency: np.array = None,
+            precompute_masks: np.ndarray = None,
+            adjacency: np.ndarray = None,
             activation: str = 'relu'):
         """
         Initializes a Structured Neural Network (StrNN)
