@@ -10,7 +10,7 @@ from .odefunc import ODEfunc
 class CNF(nn.Module):
     """
     Local copy of FFJORD's cnf.py as FFJORD is unavailable as a package.
-    See: https://github.com/rtqichen/ffjord/blob/master/lib/layers/cnf.p
+    See: https://github.com/rtqichen/ffjord/blob/master/lib/layers/cnf.py
     """
     sqrt_end_time: torch.Tensor
 

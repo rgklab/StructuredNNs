@@ -200,6 +200,7 @@ class StrODENet(ODENet):
         Args:
             input_dim: Input dimension.
         """
+        super().__init__()
         self.net = StrNN(
             input_dim,
             hidden_dim,

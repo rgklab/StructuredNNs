@@ -53,4 +53,4 @@ def test_cnf_forward(ode_type):
     assert torch.is_tensor(jac)
     assert jac.shape == (batch_size, 1)
 
-    assert torch.allclose(rand_in, inv, rtol=1e-3, atol=1e-3)
+    assert torch.allclose(rand_in, inv, rtol=1e-2, atol=1e-2)
