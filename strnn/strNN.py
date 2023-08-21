@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 import pytorch_lightning as pl
 
-from .model_utils import NONLINEARITIES
+from .models.model_utils import NONLINEARITIES
 
 
 class MaskedLinear(nn.Linear):

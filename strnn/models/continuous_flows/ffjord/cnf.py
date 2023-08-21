@@ -15,13 +15,14 @@ class CNF(nn.Module):
     sqrt_end_time: torch.Tensor
 
     def __init__(
-            self,
-            odefunc: ODEfunc,
-            T: float = 1.0,
-            train_T: bool = False,
-            solver: str = 'dopri5',
-            atol: float = 1e-5,
-            rtol: float = 1e-5):
+        self,
+        odefunc: ODEfunc,
+        T: float = 1.0,
+        train_T: bool = False,
+        solver: str = 'dopri5',
+        atol: float = 1e-5,
+        rtol: float = 1e-5
+    ):
         """Initializes a FFJORD CNF.
 
         Args:
@@ -48,10 +49,11 @@ class CNF(nn.Module):
         self.test_rtol = rtol
 
     def forward(
-            self,
-            z: torch.Tensor,
-            logpz: torch.Tensor | None = None,
-            reverse: bool = False) -> TTuple:
+        self,
+        z: torch.Tensor,
+        logpz: torch.Tensor | None = None,
+        reverse: bool = False
+    ) -> TTuple:
         """Compute forward pass of CNF.
 
         Args:

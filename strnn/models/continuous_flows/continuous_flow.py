@@ -59,7 +59,7 @@ class ContinuousFlowFactory():
     def build_odenet(self) -> ODENet:
         """Constructs neural network used to model ODE dynamics function.
 
-        Return:
+        Returns:
             Neural network used to parameterize ODE dynamics.
         """
         net: ODENet | None = None
@@ -115,7 +115,7 @@ class ContinuousFlowFactory():
         """Builds a chain of continuous normalizing flows.
 
         Returns:
-            Sequence of FFJORD cnfs wrapped in ContinuousFlow class
+            Sequence of FFJORD CNFs wrapped in ContinuousFlow class
         """
         chain = [self.build_cnf_step() for _ in range(self.flow_steps)]
         model = SequentialFlow(chain)
