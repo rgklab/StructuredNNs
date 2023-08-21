@@ -1,11 +1,20 @@
+from abc import ABCMeta, abstractmethod
+
+import numpy as np
+
 import torch
 import torch.nn as nn
 
-
-from ..strNN import StrNN
-from ..model_utils import NONLINEARITIES, cast_adj_mat
+from ...strNN import StrNN
+from ..model_utils import NONLINEARITIES
 
 from ...models import Array_like
+
+
+class ODENet(nn.Module, metaclass=ABCMeta):
+    @abstractmethod
+    def forward(self, t, x):
+        pass
 
 
 class WeilbachSparseLinear(nn.Module):
@@ -26,11 +35,10 @@ class WeilbachSparseLinear(nn.Module):
 
         self.dim_in = dim_in
         self.dim_out = dim_out
-
-        self.adj_mat = cast_adj_mat(adj_mat, "torch")
+        self.adj_mat = torch.Tensor(adj_mat)
 
         _weight_mask = torch.zeros([dim_out, dim_in])
-        _weight_mask[:adj_mat.shape[0], :adj_mat.shape[1]] = adj_mat
+        _weight_mask[:adj_mat.shape[0], :adj_mat.shape[1]] = self.adj_mat
         self._weight_mask = _weight_mask
 
         lin = nn.Linear(dim_in, dim_out)
@@ -48,7 +56,7 @@ class WeilbachSparseLinear(nn.Module):
         return res * torch.sigmoid(self._hyper_gate(t.view(1, 1))) + hyper_bias
 
 
-class WeilbachSparseODENet(nn.Module):
+class WeilbachSparseODENet(ODENet):
     """Implements the sparse ODENet described in:
     http://proceedings.mlr.press/v108/weilbach20a/weilbach20a.pdf
 
@@ -60,17 +68,26 @@ class WeilbachSparseODENet(nn.Module):
     the adjacency matrix.
     """
     def __init__(
-            self,
-            input_dim: int,
-            num_layer: int,
-            act_type: str,
-            adj_mat: Array_like):
+        self,
+        input_dim: int,
+        num_layer: int,
+        act_type: str,
+        adj_mat: Array_like
+    ):
+        """Initializes sparse ODENet from Weilbach et al. 2020.
+
+        Args:
+            input_dim: Input dimension.
+            num_layer: Number of stacked WeilbachSparseLinear layers.
+            act_type: Type of activation function used between layers.
+            adj_mat: 2D Binary adjacency matrix.
+        """
         super().__init__()
 
-        adj_mat = cast_adj_mat(adj_mat, "torch")
+        adj_mat = torch.Tensor(adj_mat)
         self.adj_mat = adj_mat
 
-        layers = [WeilbachSparseLinear(input_dim+1, input_dim, adj_mat)]
+        layers = [WeilbachSparseLinear(input_dim + 1, input_dim, adj_mat)]
 
         for _ in range(num_layer):
             layers.append(WeilbachSparseLinear(input_dim, input_dim, adj_mat))
@@ -110,7 +127,7 @@ class IgnoreLinear(nn.Module):
             dim_in: Input dimension.
             dim_out: Output dimension.
         """
-        super(IgnoreLinear, self).__init__()
+        super().__init__()
         self._layer = nn.Linear(dim_in, dim_out)
 
     def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -118,7 +135,7 @@ class IgnoreLinear(nn.Module):
         return self._layer(x)
 
 
-class FCODEnet(nn.Module):
+class FCODEnet(ODENet):
     """Fully connected ODENet.
 
     Code modified from FFJORD: https://github.com/rtqichen/ffjord.
@@ -127,10 +144,11 @@ class FCODEnet(nn.Module):
     best negative control for against the StrODENet and WeilbachSparseODENet.
     """
     def __init__(
-            self,
-            input_dim: int,
-            hidden_dims: list[int],
-            act_type: str):
+        self,
+        input_dim: int,
+        hidden_dims: tuple[int],
+        act_type: str
+    ):
         """Initializes a fully connected ODENet.
 
         Args:
@@ -141,13 +159,13 @@ class FCODEnet(nn.Module):
         Returns:
             Fully connected NN for use in Neural ODE.
         """
-        super(FCODEnet, self).__init__()
+        super().__init__()
 
         layers = []
         activation_fns = []
         hidden_shape = input_dim
 
-        for dim_out in hidden_dims + [input_dim]:
+        for dim_out in list(hidden_dims) + [input_dim]:
             layers.append(IgnoreLinear(hidden_shape, dim_out))
             activation_fns.append(NONLINEARITIES[act_type])
 
@@ -156,7 +174,7 @@ class FCODEnet(nn.Module):
         self.layers = nn.ModuleList(layers)
         self.activation_fns = nn.ModuleList(activation_fns[:-1])
 
-    def forward(self, t: torch.Tensor, y: torch.Tensor) -> nn.Module:
+    def forward(self, t: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         dx = y
         for i, layer in enumerate(self.layers):
             dx = layer(t, dx)
@@ -166,9 +184,34 @@ class FCODEnet(nn.Module):
         return dx
 
 
-class StrODENet(StrNN):
+class StrODENet(ODENet):
     """Wraps StrNN model for use as an ODE dynamic function."""
+    def __init__(
+        self,
+        input_dim: int,
+        hidden_dim: tuple[int],
+        activation: str,
+        opt_type: str,
+        opt_args: dict,
+        adjacency: np.ndarray
+    ):
+        """Initializes StrODENet.
+
+        Args:
+            input_dim: Input dimension.
+        """
+        super().__init__()
+        self.net = StrNN(
+            input_dim,
+            hidden_dim,
+            input_dim,
+            opt_type,
+            opt_args,
+            None,
+            adjacency,
+            activation
+        )
 
     def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """Currently uses an autonomous function."""
-        return super().forward(x)
+        return self.net(x)

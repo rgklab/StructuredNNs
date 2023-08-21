@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 import pytorch_lightning as pl
 
-from .model_utils import NONLINEARITIES
+from .models.model_utils import NONLINEARITIES
 
 
 class MaskedLinear(nn.Linear):
@@ -12,15 +12,17 @@ class MaskedLinear(nn.Linear):
     A linear neural network layer, except with a configurable
     binary mask on the weights
     """
-    def __init__(self, in_features, out_features):
+    mask: torch.Tensor
+
+    def __init__(self, in_features: int, out_features: int):
         super().__init__(in_features, out_features)
         # register_buffer used for non-parameter variables in the model
         self.register_buffer('mask', torch.ones(out_features, in_features))
 
-    def set_mask(self, mask):
+    def set_mask(self, mask: np.ndarray):
         self.mask.data.copy_(torch.from_numpy(mask.astype(np.uint8).T))
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         # * is element-wise multiplication in numpy
         return F.linear(input, self.mask * self.weight, self.bias)
 
@@ -35,8 +37,8 @@ class StrNN(pl.LightningModule):
             nin: int, hidden_sizes: tuple[int, ...], nout: int,
             opt_type: str = 'greedy',
             opt_args: dict = {'var_penalty_weight': 0.0},
-            precompute_masks: np.array = None,
-            adjacency: np.array = None,
+            precompute_masks: np.ndarray | None = None,
+            adjacency: np.ndarray | None = None,
             activation: str = 'relu'):
         """
         Initializes a Structured Neural Network (StrNN)
@@ -68,17 +70,17 @@ class StrNN(pl.LightningModule):
             raise ValueError(f"{activation} is not a valid activation!")
 
         # Define StrNN network
-        self.net = []
+        self.net_list = []
         hs = [nin] + list(hidden_sizes) + [nout]  # list of all layer sizes
         for h0, h1 in zip(hs, hs[1:]):
-            self.net.extend([
+            self.net_list.extend([
                 MaskedLinear(h0, h1),
                 self.activation
             ])
 
         # Remove the last activation for the output layer
-        self.net.pop()
-        self.net = nn.Sequential(*self.net)
+        self.net_list.pop()
+        self.net = nn.Sequential(*self.net_list)
 
         # Update masks
         self.update_masks()
@@ -124,7 +126,7 @@ class StrNN(pl.LightningModule):
         :return: list of masks in order for layers from inputs to outputs.
         This order matches how the masks are assigned to the networks in MADE.
         """
-        masks = []
+        masks: list[np.ndarray] = []
         adj_mtx = np.copy(self.A)
 
         # TODO: We need to handle default None case (maybe init an FC layer?)
@@ -175,7 +177,7 @@ class StrNN(pl.LightningModule):
 
         return M1, M2
 
-    def factorize_single_mask_MADE(self):
+    def factorize_single_mask_MADE(self, adj_mtx: np.ndarray, n_hidden: int):
         return None, None
 
     def check_masks(self) -> bool:

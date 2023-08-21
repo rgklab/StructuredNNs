@@ -17,7 +17,7 @@ A = np.array(
 )
 
 input_dim = A.shape[0]
-hidden_dim = [25, 25, 25]
+hidden_dim = (25, 25, 25)
 act_type = "tanh"
 
 opt_type = "greedy"
@@ -29,7 +29,7 @@ rand_t = torch.randn(1, dtype=torch.float)
 int_times = torch.arange(0, 5, dtype=torch.float)
 
 
-def test_weilbach_lin():
+def test_weilbach_lin_forward():
     layer = WeilbachSparseLinear(input_dim, input_dim, torch.Tensor(A))
 
     output = layer(rand_t, rand_in)
@@ -39,7 +39,7 @@ def test_weilbach_lin():
     assert int_out.shape == (batch_size, input_dim, len(int_times))
 
 
-def test_weilbach_odenet():
+def test_weilbach_odenet_forward():
     odenet = WeilbachSparseODENet(input_dim, len(hidden_dim), act_type, A)
 
     output = odenet(rand_t, rand_in)
@@ -49,7 +49,7 @@ def test_weilbach_odenet():
     assert int_out.shape == (batch_size, input_dim, len(int_times))
 
 
-def test_fcodenet():
+def test_fcodenet_forward():
     odenet = FCODEnet(input_dim, hidden_dim, act_type)
     output = odenet(rand_t, rand_in)
     assert output.shape == rand_in.shape
@@ -58,15 +58,14 @@ def test_fcodenet():
     assert int_out.shape == (batch_size, input_dim, len(int_times))
 
 
-def test_strode():
+def test_strode_forward():
     odenet = StrODENet(
         input_dim,
         hidden_dim,
-        input_dim,
+        act_type,
         opt_type,
         opt_args,
-        adjacency=A,
-        activation=act_type
+        A
     )
     output = odenet(rand_t, rand_in)
     assert output.shape == rand_in.shape

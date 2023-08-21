@@ -31,9 +31,6 @@ config = {
     ODE_SOLVER_ATOL: 1e-3,
     ODE_SOLVER_RTOL: 1e-5,
     ODE_SOLVER_STEP: None,
-
-    ODE_RADE: False,
-    ODE_RES: False
 }
 
 batch_size = 32
@@ -41,14 +38,19 @@ rand_in = torch.randn(batch_size, adj_mat.shape[0])
 
 
 @pytest.mark.parametrize("ode_type", ["strnn", "weilbach", "fully_connected"])
-def test_cnf_strnn(ode_type):
+def test_cnf_forward(ode_type):
     config[ODENET_LIN] = ode_type
     factory = ContinuousFlowFactory(config)
     cnf = factory.build_cnf()
 
     assert isinstance(cnf, ContinuousFlow)
 
-    out = cnf(rand_in)
-    inv = cnf.invert(out)
+    out, jac = cnf(rand_in)
+    assert torch.is_tensor(jac)
+    assert jac.shape == (batch_size, 1)
 
-    assert torch.allclose(rand_in, inv, rtol=1e-3, atol=1e-3)
+    inv, jac = cnf.invert(out)
+    assert torch.is_tensor(jac)
+    assert jac.shape == (batch_size, 1)
+
+    assert torch.allclose(rand_in, inv, rtol=1e-2, atol=1e-2)

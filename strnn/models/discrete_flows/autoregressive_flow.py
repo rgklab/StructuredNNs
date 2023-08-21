@@ -5,7 +5,6 @@ from ..normalizing_flow import NormalizingFlow
 
 
 class AutoregressiveFlow(NormalizingFlow):
-
     def __init__(self):
         super().__init__()
 
@@ -17,7 +16,6 @@ class AutoregressiveFlow(NormalizingFlow):
 
 
 class AutoregressiveFlowStep(nn.Module):
-
     def __init__(self):
         super().__init__()
 
@@ -30,5 +28,5 @@ class AutoregressiveFlowStep(nn.Module):
 
 class AutoregressiveFlowFactory():
 
-    def create_flow(model_args: dict) -> AutoregressiveFlow:
+    def create_flow(self, model_args: dict) -> AutoregressiveFlow:
         pass

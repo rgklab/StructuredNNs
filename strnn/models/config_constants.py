@@ -17,6 +17,3 @@ ODE_SOLVER_TYPE = "ode_solver_type"
 ODE_SOLVER_ATOL = "ode_solver_atol"
 ODE_SOLVER_RTOL = "ode_solver_rtol"
 ODE_SOLVER_STEP = "ode_solver_stepsize"
-
-ODE_RADE = "ode_rademacher"
-ODE_RES = "ode_residual"
