@@ -1,0 +1,17 @@
+ffjord_baseline:
+  base_model: "CNF"
+
+  opt_type: null
+  opt_args: null
+
+  odenet_lin_type: "fully_connected"
+  odenet_act_type: "tanh"
+  ode_divergence_fn: "brute_force"
+
+  ode_time_length: 0.5
+  ode_train_T: True
+
+  ode_solver_type: "dopri5"
+  ode_solver_atol: 0.00001
+  ode_solver_rtol: 0.00001
+  ode_solver_stepsize: null

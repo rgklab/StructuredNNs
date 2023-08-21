@@ -1,3 +1,4 @@
+BASE_MODEL = "base_model"
 INPUT_DIM = "input_dim"
 ADJ = "adjacency_matrix"
 

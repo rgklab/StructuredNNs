@@ -208,7 +208,7 @@ if __name__ == '__main__':
 
     model = StrNN(
         nin=d,
-        hidden_sizes=(d*2,),
+        hidden_sizes=(d * 2,),
         nout=d,
         opt_type='greedy',
         opt_args={'var_penalty_weight': 0.0},

@@ -1,0 +1,8 @@
+multimodal:
+  data_dim: 15
+  adj_mat_gen_fn: "uniform"
+  adj_mat_gen_args: {"threshold": 0.8}
+  n_modes: 3
+  w_range: [-3, 3]
+  mean_range: [-8, 8]
+  std_range: [0.01, 2]

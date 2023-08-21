@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from ..normalizing_flow import NormalizingFlow
+from ..normalizing_flow import NormalizingFlow, NormalizingFlowFactory
 
 
 class AutoregressiveFlow(NormalizingFlow):
@@ -26,7 +26,7 @@ class AutoregressiveFlowStep(nn.Module):
         pass
 
 
-class AutoregressiveFlowFactory():
+class AutoregressiveFlowFactory(NormalizingFlowFactory):
 
     def create_flow(self, model_args: dict) -> AutoregressiveFlow:
         pass

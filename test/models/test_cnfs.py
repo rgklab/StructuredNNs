@@ -41,7 +41,7 @@ rand_in = torch.randn(batch_size, adj_mat.shape[0])
 def test_cnf_forward(ode_type):
     config[ODENET_LIN] = ode_type
     factory = ContinuousFlowFactory(config)
-    cnf = factory.build_cnf()
+    cnf = factory.build_flow()
 
     assert isinstance(cnf, ContinuousFlow)
 

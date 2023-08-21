@@ -16,7 +16,7 @@ class DivergenceFunction():
             return self.divergence_approx(dy, y, e)
 
     def divergence_bf(self, dx: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        sum_diag = torch.zeros(dx.shape[0])
+        sum_diag = torch.zeros(dx.shape[0]).to(y)
         for i in range(y.shape[1]):
             grad = torch.autograd.grad(dx[:, i].sum(), y, create_graph=True)
             sum_diag += grad[0].contiguous()[:, i].contiguous()

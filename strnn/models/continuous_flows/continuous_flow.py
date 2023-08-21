@@ -1,6 +1,6 @@
 import torch
 
-from ..normalizing_flow import NormalizingFlow
+from ..normalizing_flow import NormalizingFlow, NormalizingFlowFactory
 from ..config_constants import *
 
 from .odenets import WeilbachSparseODENet, FCODEnet, StrODENet, ODENet
@@ -24,37 +24,34 @@ class ContinuousFlow(NormalizingFlow):
         return self.model(z, reverse=True)
 
 
-class ContinuousFlowFactory():
+class ContinuousFlowFactory(NormalizingFlowFactory):
     """Constructs a FFJORD continuous normalizing flow."""
-    def __init__(self, args):
-        self.parse_args(args)
+    def __init__(self, config: dict):
+        self.config = config
+        self.parse_config(config)
 
-    def parse_args(self, args: dict):
+    def parse_config(self, config: dict):
         """Parses config for relevant arguments."""
-        self.input_dim = args[INPUT_DIM]
-        self.hidden_dim = args[ODENET_HID]
-        self.lin_type = args[ODENET_LIN]
-        self.act_type = args[ODENET_ACT]
+        self.input_dim = config[INPUT_DIM]
+        self.hidden_dim = config[ODENET_HID]
+        self.lin_type = config[ODENET_LIN]
+        self.act_type = config[ODENET_ACT]
 
-        self.adj_mat = args[ADJ]
-        self.opt_type = args[OPT_TYPE]
-        self.opt_args = args[OPT_ARGS]
+        self.adj_mat = config[ADJ]
+        self.opt_type = config[OPT_TYPE]
+        self.opt_args = config[OPT_ARGS]
 
-        self.divergence_fn = args[ODENET_DIV_FN]
+        self.divergence_fn = config[ODENET_DIV_FN]
 
-        self.T = args[ODE_TIME]
-        self.train_T = args[ODE_TRAIN_T]
+        self.T = config[ODE_TIME]
+        self.train_T = config[ODE_TRAIN_T]
 
-        self.solver = args[ODE_SOLVER_TYPE]
-        self.atol = args[ODE_SOLVER_ATOL]
-        self.rtol = args[ODE_SOLVER_RTOL]
-        self.step_size = args[ODE_SOLVER_STEP]
+        self.solver = config[ODE_SOLVER_TYPE]
+        self.atol = config[ODE_SOLVER_ATOL]
+        self.rtol = config[ODE_SOLVER_RTOL]
+        self.step_size = config[ODE_SOLVER_STEP]
 
-        self.flow_steps = args[FLOW_STEPS]
-
-    def get_config(self):
-        """Returns all arguments used in model construction for logging."""
-        raise NotImplementedError
+        self.flow_steps = config[FLOW_STEPS]
 
     def build_odenet(self) -> ODENet:
         """Constructs neural network used to model ODE dynamics function.
@@ -111,7 +108,7 @@ class ContinuousFlowFactory():
         )
         return cnf
 
-    def build_cnf(self) -> ContinuousFlow:
+    def build_flow(self) -> ContinuousFlow:
         """Builds a chain of continuous normalizing flows.
 
         Returns:

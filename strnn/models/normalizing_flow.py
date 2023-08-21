@@ -25,8 +25,20 @@ class NormalizingFlow(nn.Module, metaclass=ABCMeta):
         pass
 
 
+class NormalizingFlowFactory(metaclass=ABCMeta):
+    """Interface for a normalizing flow factory."""
+    @abstractmethod
+    def parse_config(self, config: dict):
+        pass
+
+    @abstractmethod
+    def build_flow(self) -> NormalizingFlow:
+        pass
+
+
 class NormalizingFlowLearner(pl.LightningModule):
     def __init__(self, flow: NormalizingFlow, lr: float):
+        super().__init__()
         self.flow = flow
         self.lr = lr
 
@@ -43,8 +55,19 @@ class NormalizingFlowLearner(pl.LightningModule):
         logpx = logpz - jac
         loss = -torch.mean(logpx)
 
+        self.log("train_loss", loss.item())
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        z, jac = self.flow.forward(batch)
+        logpz = standard_normal_logprob(z)
+
+        logpx = logpz - jac
+        loss = -torch.mean(logpx)
+
+        self.log("val_loss", loss.item())
         return loss
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = optim.Adam(self.flow.parameters(), lr=self.lr)
         return optimizer

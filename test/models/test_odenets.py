@@ -21,7 +21,7 @@ hidden_dim = (25, 25, 25)
 act_type = "tanh"
 
 opt_type = "greedy"
-opt_args = {}
+opt_args: dict = {}
 
 batch_size = 32
 rand_in = torch.randn(batch_size, input_dim)
