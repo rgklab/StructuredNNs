@@ -15,9 +15,10 @@ from ...models import TTuple
 
 
 class ContinuousFlow(NormalizingFlow):
-    def __init__(self, ffjord_cnf: SequentialFlow):
+    def __init__(self, ffjord_cnf: SequentialFlow, config: dict):
         super().__init__()
         self.model = ffjord_cnf
+        self.config = config
 
     def forward(self, x: torch.Tensor) -> TTuple:
         return self.model(x, reverse=False)
@@ -195,5 +196,5 @@ class ContinuousFlowFactory(NormalizingFlowFactory):
 
         model.apply(_set)
 
-        cnf = ContinuousFlow(model)
+        cnf = ContinuousFlow(model, self.config)
         return cnf

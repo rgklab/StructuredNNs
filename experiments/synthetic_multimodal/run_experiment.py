@@ -22,6 +22,8 @@ from strnn.models import NormalizingFlowLearner
 from strnn.models.config_constants import ADJ, INPUT_DIM
 from strnn.models.config_constants import BASE_MODEL, FLOW_STEPS, ODENET_HID
 
+from experiments.train_utils import CallbackComputeMMD
+
 from data.data_utils import DSTuple
 
 
@@ -37,6 +39,8 @@ parser.add_argument("--batch_size", type=int, default=256)
 parser.add_argument("--max_epochs", type=int, default=100)
 parser.add_argument("--lr", type=float, default=1e-3)
 parser.add_argument("--patience", type=int, default=10)
+parser.add_argument("--mmd_n_samples", type=int)
+parser.add_argument("--mmd_gamma", type=float, default=0.1)
 
 parser.add_argument("--model_config", type=str, required=True)
 parser.add_argument("--flow_steps", type=int, default=3)
@@ -146,6 +150,10 @@ def main():
     if args.patience != -1:
         early_stopping = EarlyStopping("val_loss", patience=args.patience)
         train_args["callbacks"].append(early_stopping)
+
+    if args.mmd_n_samples > 0:
+        mmd_callback = CallbackComputeMMD(args.mmd_n_samples, args.mmd_gamma)
+        train_args["callbacks"].append(mmd_callback)
 
     trainer = pl.Trainer(**train_args)
 

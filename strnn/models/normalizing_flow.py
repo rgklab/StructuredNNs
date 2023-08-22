@@ -8,6 +8,8 @@ import torch.optim as optim
 
 import pytorch_lightning as pl
 
+from strnn.models.config_constants import INPUT_DIM
+
 
 def standard_normal_logprob(z: torch.Tensor) -> torch.Tensor:
     """Evaluates likelihood of z under standard normal."""
@@ -42,13 +44,27 @@ class NormalizingFlowLearner(pl.LightningModule):
         self.flow = flow
         self.lr = lr
 
-    def forward(self, x):
-        return self.flow(x)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.flow.forward(x)
 
-    def invert(self, z):
-        return self.invert(z)
+    def invert(self, z: torch.Tensor) -> torch.Tensor:
+        return self.flow.invert(z)
 
-    def training_step(self, batch, batch_idx):
+    def sample(self, n_sample: int) -> torch.Tensor:
+        """Transforms samples from latent to learned data distribution.
+
+        Args:
+            n_sample: Number of samples to generate.
+        Returns:
+            Sampled points from the learned data distribution.
+        """
+        out_dim = (n_sample, self.flow.config[INPUT_DIM])
+        z_samples = torch.normal(0, 1, size=out_dim).to(self.device)
+        x_samples = self.invert(z_samples)
+
+        return x_samples
+
+    def training_step(self, batch: torch.Tensor, idx: int) -> torch.Tensor:
         z, jac = self.flow.forward(batch)
         logpz = standard_normal_logprob(z)
 
@@ -58,7 +74,7 @@ class NormalizingFlowLearner(pl.LightningModule):
         self.log("train_loss", loss.item())
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: torch.Tensor, idx: int) -> torch.Tensor:
         z, jac = self.flow.forward(batch)
         logpz = standard_normal_logprob(z)
 
