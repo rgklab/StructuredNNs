@@ -110,10 +110,10 @@ def main():
     model_config[FLOW_STEPS] = args.flow_steps
     model_config[ODENET_HID] = args.hidden_dim
 
-    print(args.adj_mod)
+    adj_mat = generator.adj_mat
     if args.adj_mod is not None:
         adj_modifier = AdjacencyModifier(args.adj_mod)
-        adj_mat = adj_modifier.modify_adjacency(generator.adj_mat)
+        adj_mat = adj_modifier.modify_adjacency(adj_mat)
     model_config[ADJ] = adj_mat
 
     model_factory = MODEL_CONSTR_MAP[model_config[BASE_MODEL]](model_config)
@@ -126,7 +126,10 @@ def main():
 
     learner = NormalizingFlowLearner(model, args.lr)
 
-    train_args = {"max_epochs": args.max_epochs}
+    train_args = {
+        "max_epochs": args.max_epochs,
+        "callbacks": []
+    }
 
     if args.wandb_name:
         # Reset adjacency to ground truth for persistence. Any modifiers
@@ -142,7 +145,7 @@ def main():
 
     if args.patience != -1:
         early_stopping = EarlyStopping("val_loss", patience=args.patience)
-        train_args["callbacks"] = [early_stopping]
+        train_args["callbacks"].append(early_stopping)
 
     trainer = pl.Trainer(**train_args)
 
