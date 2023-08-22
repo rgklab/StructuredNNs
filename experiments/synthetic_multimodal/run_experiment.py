@@ -28,6 +28,7 @@ parser.add_argument("--n_samples", type=int, default=5000)
 parser.add_argument("--split_ratio", type=eval, default=[0.6, 0.2, 0.2])
 
 parser.add_argument("--batch_size", type=int, default=256)
+parser.add_argument("--max_epochs", type=int, default=100)
 parser.add_argument("--lr", type=float, default=1e-3)
 parser.add_argument("--patience", type=int, default=-1)
 
@@ -104,10 +105,12 @@ def main():
     learner = NormalizingFlowLearner(model, args.lr)
 
     if args.patience == -1:
-        trainer = pl.Trainer(max_epochs=100)
+        trainer = pl.Trainer(max_epochs=args.max_epochs)
     else:
         early_stopping = EarlyStopping("val_loss", patience=args.patience)
-        trainer = pl.Trainer(max_epochs=100, callbacks=[early_stopping])
+
+        trainer = pl.Trainer(max_epochs=args.max_epochs,
+                             callbacks=[early_stopping])
 
     trainer.fit(model=learner,
                 train_dataloaders=train_dl,

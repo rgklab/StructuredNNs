@@ -77,7 +77,7 @@ class CNF(nn.Module):
         state_t = odeint(
             self.odefunc,
             (z, _logpz),
-            integration_times.to(z),
+            integration_times,
             atol=self.atol,
             rtol=self.rtol,
             method=self.solver,

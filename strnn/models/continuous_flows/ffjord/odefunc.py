@@ -44,6 +44,8 @@ class ODEfunc(nn.Module):
         self.diffeq = diffeq
         self.div_fn = DivergenceFunction(divergence_fn)
 
+        self._e: torch.Tensor | None = None
+
     def before_odeint(self, e: torch.Tensor | None = None):
         self._e = e
 
@@ -53,14 +55,14 @@ class ODEfunc(nn.Module):
 
         # convert to tensor
         if not torch.is_tensor(t):
-            t = torch.tensor(t)
+            t = torch.tensor(t).to(y)
         t = t.type_as(y)
 
         batchsize = y.shape[0]
 
         # Sample and fix the noise.
         if self._e is None:
-            self._e = torch.randn_like(y)
+            self._e = torch.randn_like(y).to(y)
 
         with torch.set_grad_enabled(True):
             y.requires_grad_(True)

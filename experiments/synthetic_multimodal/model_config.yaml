@@ -1,10 +1,5 @@
-ffjord_baseline:
+ode_defaults: &defaults
   base_model: "CNF"
-
-  opt_type: null
-  opt_args: null
-
-  odenet_lin_type: "fully_connected"
   odenet_act_type: "tanh"
   ode_divergence_fn: "brute_force"
 
@@ -15,3 +10,23 @@ ffjord_baseline:
   ode_solver_atol: 0.00001
   ode_solver_rtol: 0.00001
   ode_solver_stepsize: null
+
+
+ffjord_baseline:
+  <<: *defaults
+  odenet_lin_type: "fully_connected"
+  opt_type: null
+  opt_args: null
+
+
+ffjord_strode:
+  <<: *defaults
+  odenet_lin_type: "strnn"
+  opt_type: "greedy"
+  opt_args: {}
+
+ffjord_weilbach:
+  <<: *defaults
+  odenet_lin_type: "weilbach"
+  opt_type: null
+  opt_args: null
