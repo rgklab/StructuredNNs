@@ -54,3 +54,45 @@ def test_cnf_forward(ode_type):
     assert jac.shape == (batch_size, 1)
 
     assert torch.allclose(rand_in, inv, rtol=1e-2, atol=1e-2)
+
+
+def test_adj_modifier_diag():
+    true_adj_mat = np.array([
+        [1, 0, 0, 0],
+        [1, 1, 0, 0],
+        [0, 1, 1, 0],
+        [0, 1, 1, 1]
+    ])
+    modifiers = ["main_diagonal"]
+
+    adj_mod = AdjacencyModifier(modifiers)
+    mod_adj_mat = adj_mod.modify_adjacency(adj_mat)
+    assert np.all(mod_adj_mat == true_adj_mat)
+
+
+def test_adj_modifier_reflect():
+    true_adj_mat = np.array([
+        [0, 1, 0, 0],
+        [1, 0, 1, 1],
+        [0, 1, 0, 1],
+        [0, 1, 1, 0]
+    ])
+    modifiers = ["reflect"]
+
+    adj_mod = AdjacencyModifier(modifiers)
+    mod_adj_mat = adj_mod.modify_adjacency(adj_mat)
+    assert np.all(mod_adj_mat == true_adj_mat)
+
+
+def test_adj_modifier_reflect_diag():
+    true_adj_mat = np.array([
+        [1, 1, 0, 0],
+        [1, 1, 1, 1],
+        [0, 1, 1, 1],
+        [0, 1, 1, 1]
+    ])
+    modifiers = ["main_diagonal", "reflect"]
+
+    adj_mod = AdjacencyModifier(modifiers)
+    mod_adj_mat = adj_mod.modify_adjacency(adj_mat)
+    assert np.all(mod_adj_mat == true_adj_mat)
