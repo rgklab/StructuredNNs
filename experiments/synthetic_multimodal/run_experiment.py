@@ -30,14 +30,15 @@ parser.add_argument("--data_random_seed", type=int, default=2547)
 parser.add_argument("--n_samples", type=int, default=5000)
 parser.add_argument("--split_ratio", type=eval, default=[0.6, 0.2, 0.2])
 
-parser.add_argument("--batch_size", type=int, default=256)
-parser.add_argument("--max_epochs", type=int, default=100)
+parser.add_argument("--batch_size", type=int, default=128)
+parser.add_argument("--max_epochs", type=int, default=200)
 parser.add_argument("--lr", type=float, default=1e-3)
-parser.add_argument("--patience", type=int, default=-1)
+parser.add_argument("--patience", type=int, default=10)
 
 parser.add_argument("--model_config", type=str, required=True)
 parser.add_argument("--flow_steps", type=int, default=3)
-parser.add_argument("--hidden_dim", type=eval, default=(100, 100))
+parser.add_argument("--hidden_width", type=int, default=300)
+parser.add_argument("--hidden_depth", type=int, default=2)
 parser.add_argument("--model_seed", type=int, default=2547)
 
 parser.add_argument("--wandb_name", type=str)
@@ -87,6 +88,8 @@ def load_data(
 
 
 def main():
+    args.hidden_dim = tuple([args.hidden_width] * args.hidden_depth)
+
     generator, data = load_data(args.dataset_name, args.n_samples,
                                 args.split_ratio, args.data_random_seed)
 
