@@ -18,6 +18,8 @@ def standard_normal_logprob(z: torch.Tensor) -> torch.Tensor:
 
 class NormalizingFlow(nn.Module, metaclass=ABCMeta):
     """Interface for Normalizing Flows."""
+    config: dict
+
     @abstractmethod
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         pass
@@ -39,15 +41,18 @@ class NormalizingFlowFactory(metaclass=ABCMeta):
 
 
 class NormalizingFlowLearner(pl.LightningModule):
+    """PyTorch-Lightning wrapper for NormalizingFlows."""
+    device: torch.device
+
     def __init__(self, flow: NormalizingFlow, lr: float):
         super().__init__()
         self.flow = flow
         self.lr = lr
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         return self.flow.forward(x)
 
-    def invert(self, z: torch.Tensor) -> torch.Tensor:
+    def invert(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         return self.flow.invert(z)
 
     def sample(self, n_sample: int) -> torch.Tensor:
@@ -59,8 +64,8 @@ class NormalizingFlowLearner(pl.LightningModule):
             Sampled points from the learned data distribution.
         """
         out_dim = (n_sample, self.flow.config[INPUT_DIM])
-        z_samples = torch.normal(0, 1, size=out_dim).to(self.device)
-        x_samples = self.invert(z_samples)
+        z_samples = torch.normal(0, 1, size=out_dim, device=self.device)
+        x_samples = self.invert(z_samples)[0]
 
         return x_samples
 

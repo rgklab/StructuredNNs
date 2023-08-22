@@ -32,16 +32,19 @@ class CallbackComputeMMD(Callback):
         self.gamma = gamma
 
     def on_validation_epoch_end(self, t: Trainer, nf: NormalizingFlowLearner):
-        val_dl = t.val_dataloaders
-        batch_size = val_dl.batch_size
-        val_dataset = val_dl.dataset
+        if t.val_dataloaders is None:
+            msg = "Validation dataloader must be specified to compute MMD."
+            raise AttributeError(msg)
+        else:
+            val_dl = t.val_dataloaders
+            batch_size = val_dl.batch_size
 
         x_samples = []
         for _ in range(self.n_samples // batch_size):
-            x_samples.append(nf.sample(batch_size)[0].cpu().numpy())
+            x_samples.append(nf.sample(batch_size).cpu().numpy())
 
-        x_samples = np.concatenate(x_samples)
-        val_dataset_np = val_dataset.cpu().numpy()
+        all_x_samples = np.concatenate(x_samples)
+        val_dataset_np = val_dl.dataset.cpu().numpy()
 
-        mmd = compute_sample_mmd(x_samples, val_dataset_np, self.gamma)
+        mmd = compute_sample_mmd(all_x_samples, val_dataset_np, self.gamma)
         nf.log("val_mmd", mmd)
