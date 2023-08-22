@@ -15,6 +15,7 @@ from data.make_adj_mtx import generate_adj_mat_uniform
 from data.synthetic_multimodal import SyntheticMultimodalDataset
 
 from strnn.models.discrete_flows import AutoregressiveFlowFactory
+from strnn.models.continuous_flows import AdjacencyModifier
 from strnn.models.continuous_flows import ContinuousFlowFactory
 from strnn.models import NormalizingFlowLearner
 
@@ -30,8 +31,10 @@ parser.add_argument("--data_random_seed", type=int, default=2547)
 parser.add_argument("--n_samples", type=int, default=5000)
 parser.add_argument("--split_ratio", type=eval, default=[0.6, 0.2, 0.2])
 
-parser.add_argument("--batch_size", type=int, default=128)
-parser.add_argument("--max_epochs", type=int, default=200)
+parser.add_argument("--adj_mod", type=eval)
+
+parser.add_argument("--batch_size", type=int, default=256)
+parser.add_argument("--max_epochs", type=int, default=100)
 parser.add_argument("--lr", type=float, default=1e-3)
 parser.add_argument("--patience", type=int, default=10)
 
@@ -104,9 +107,14 @@ def main():
         model_config = config[args.model_config]
 
     model_config[INPUT_DIM] = generator.data_dim
-    model_config[ADJ] = generator.adj_mat
     model_config[FLOW_STEPS] = args.flow_steps
     model_config[ODENET_HID] = args.hidden_dim
+
+    print(args.adj_mod)
+    if args.adj_mod is not None:
+        adj_modifier = AdjacencyModifier(args.adj_mod)
+        adj_mat = adj_modifier.modify_adjacency(generator.adj_mat)
+    model_config[ADJ] = adj_mat
 
     model_factory = MODEL_CONSTR_MAP[model_config[BASE_MODEL]](model_config)
 
@@ -121,6 +129,10 @@ def main():
     train_args = {"max_epochs": args.max_epochs}
 
     if args.wandb_name:
+        # Reset adjacency to ground truth for persistence. Any modifiers
+        # are stored and can be recreated.
+        model_config[ADJ] = generator.adj_mat
+
         all_config = vars(args)
         all_config.update(model_config)
 
