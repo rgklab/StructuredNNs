@@ -23,6 +23,8 @@ class WeilbachSparseLinear(nn.Module):
     See: http://proceedings.mlr.press/v108/weilbach20a/weilbach20a.pdf.
     Implementation adapted from https://github.com/plai-group/daphne.
     """
+    _weight_mask: torch.Tensor
+
     def __init__(self, dim_in: int, dim_out: int, adj_mat: Array_like):
         """Initializes a sparse concat squash layer as in Weilbach et al. 2020.
 
@@ -37,9 +39,8 @@ class WeilbachSparseLinear(nn.Module):
         self.dim_out = dim_out
         self.adj_mat = torch.Tensor(adj_mat)
 
-        _weight_mask = torch.zeros([dim_out, dim_in])
-        _weight_mask[:adj_mat.shape[0], :adj_mat.shape[1]] = self.adj_mat
-        self._weight_mask = _weight_mask
+        self.register_buffer("_weight_mask", torch.zeros([dim_out, dim_in]))
+        self._weight_mask[:adj_mat.shape[0], :adj_mat.shape[1]] = self.adj_mat
 
         lin = nn.Linear(dim_in, dim_out)
         self._weights = lin.weight
@@ -100,7 +101,7 @@ class WeilbachSparseODENet(ODENet):
 
     def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         batch_dim = x.shape[0]
-        dx = torch.cat([x, t * torch.ones([batch_dim, 1])], dim=1)
+        dx = torch.cat([x, t * torch.ones([batch_dim, 1]).to(x)], dim=1)
 
         for i, layer in enumerate(self.layers):
             # if not last layer, use nonlinearity
