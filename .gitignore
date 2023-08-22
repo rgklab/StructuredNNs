@@ -52,3 +52,4 @@ docs/_build/
 .idea/
 .vscode/
 lightning_logs/
+wandb/

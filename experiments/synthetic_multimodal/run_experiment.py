@@ -1,11 +1,14 @@
 import argparse
 import yaml
 
+import numpy as np
+
 import torch
 from torch.utils.data import DataLoader
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping
+from pytorch_lightning.loggers import WandbLogger
 
 from data.data_utils import split_dataset, standardize_data
 from data.make_adj_mtx import generate_adj_mat_uniform
@@ -34,7 +37,10 @@ parser.add_argument("--patience", type=int, default=-1)
 
 parser.add_argument("--model_config", type=str, required=True)
 parser.add_argument("--flow_steps", type=int, default=3)
-parser.add_argument("--hidden_dim", type=eval, default=(50, 50))
+parser.add_argument("--hidden_dim", type=eval, default=(100, 100))
+parser.add_argument("--model_seed", type=int, default=2547)
+
+parser.add_argument("--wandb_name", type=str)
 args = parser.parse_args()
 
 
@@ -100,17 +106,30 @@ def main():
     model_config[ODENET_HID] = args.hidden_dim
 
     model_factory = MODEL_CONSTR_MAP[model_config[BASE_MODEL]](model_config)
+
+    # Fixed seed prior to initialization. Useful for generating CIs.
+    np.random.seed(args.model_seed)
+    torch.random.manual_seed(args.model_seed)
+
     model = model_factory.build_flow()
 
     learner = NormalizingFlowLearner(model, args.lr)
 
-    if args.patience == -1:
-        trainer = pl.Trainer(max_epochs=args.max_epochs)
-    else:
-        early_stopping = EarlyStopping("val_loss", patience=args.patience)
+    train_args = {"max_epochs": args.max_epochs}
 
-        trainer = pl.Trainer(max_epochs=args.max_epochs,
-                             callbacks=[early_stopping])
+    if args.wandb_name:
+        all_config = vars(args)
+        all_config.update(model_config)
+
+        wandb_logger = WandbLogger(project=args.wandb_name)
+        wandb_logger.experiment.config.update(all_config)
+        train_args["logger"] = wandb_logger
+
+    if args.patience != -1:
+        early_stopping = EarlyStopping("val_loss", patience=args.patience)
+        train_args["callbacks"] = [early_stopping]
+
+    trainer = pl.Trainer(**train_args)
 
     trainer.fit(model=learner,
                 train_dataloaders=train_dl,
