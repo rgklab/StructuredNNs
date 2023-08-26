@@ -30,7 +30,7 @@ development:
         git push
 
 2. The below scripts have been summarized in a bash script. Please call:
-   
+
         bash precommit.sh
 
 4. Write tests where applicable. Currently using pytest, which can be installed via `pip install pytest` or via conda. Tests can be run by going to the project root and running (-s flag prints stdout):
@@ -39,11 +39,14 @@ development:
 
 5. Running static type checking. Note this can take awhile for the first run. Currently using mypy, which can be installed via `pip install mypy` or via conda. Change to root directory, and run:
 
-        mypy . --ignore-missing-imports
+        mypy data --ignore-missing-imports
+        mypy experiments --ignore-missing-imports
+        mypy strnn --ignore-missing-imports
 
 6. Style linting. Currently using flake8, which can be installed via `pip install flake8`. Change to root directory, and then run:
 
         flake8 . --ignore=F403,F405
+
     The F403, F405 flags ignore issues with star imports, though we can discuss if we should change that.
 
 

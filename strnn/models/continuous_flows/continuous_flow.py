@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 
 from ..normalizing_flow import NormalizingFlow, NormalizingFlowFactory
@@ -13,21 +15,102 @@ from ...models import TTuple
 
 
 class ContinuousFlow(NormalizingFlow):
+    """Wraps FFJORD CNF to abide to NormalizingFlow interface."""
+
     def __init__(self, ffjord_cnf: SequentialFlow):
+        """Initializes ContinuousFlow.
+
+        Args:
+            ffjord_cnf: FFJORD CNF module.
+        """
         super().__init__()
         self.model = ffjord_cnf
 
     def forward(self, x: torch.Tensor) -> TTuple:
+        """Computes forward CNF pass.
+
+        Args:
+            x: Input data.
+        Return:
+            Transformed data, and jacobian determinant.
+        """
         return self.model(x, reverse=False)
 
-    def invert(self, z: torch.Tensor) -> TTuple:
-        return self.model(z, reverse=True)
+    def invert(self, z: torch.Tensor) -> torch.Tensor:
+        """Computes inverse transform from latent to data space.
+
+        Args:
+            z: Input data from latent distribution.
+        Return:
+            Transformed data.
+        """
+        return self.model(z, reverse=True)[0]
+
+
+class AdjacencyModifier:
+    """
+    Since CNFs rely on the existence of unique ODE solutions to ensure
+    invertibility, we don't need a lower triangular adjacency. We can thus
+    experiment with the configurations that yield better results.
+    """
+    def __init__(self, modifiers: list[str]):
+        """Initializes AdjacencyModifier.
+
+        Valid modifiers are applied in input order, and be chosen from:
+        ["main_diagonal", "reflect"]
+
+        Args:
+            modified: List of modifiers to apply.
+        """
+        self.modifiers = modifiers
+
+    def modify_adjacency(self, adj_mat: np.ndarray) -> np.ndarray:
+        """Applies all modifiers onto adjacency matrix.
+
+        Args:
+            adj_mat: 2D binary adjacency matrix.
+        Returns:
+            Modified adjacency matrix.
+        """
+        adj_mat = np.copy(adj_mat)
+        for mod in self.modifiers:
+            if mod == "main_diagonal":
+                adj_mat = self._mod_add_diagonal(adj_mat)
+            elif mod == "reflect":
+                adj_mat = self._mod_reflect(adj_mat)
+            else:
+                raise ValueError("Modifier not implemented.")
+
+            # Threshold matrix to be binary.
+            adj_mat = (adj_mat > 0).astype(int)
+
+        return adj_mat
+
+    def _mod_add_diagonal(self, adj_mat: np.ndarray) -> np.ndarray:
+        """Adds ones to main diagonal.
+
+        Args:
+            adj_mat: 2D binary adjacency matrix.
+        Returns:
+            Adjacency matrix plus ones in main diagonal.
+        """
+        return adj_mat + np.eye(adj_mat.shape[0])
+
+    def _mod_reflect(self, adj_mat: np.ndarray) -> np.ndarray:
+        """Reflects lower triangular values to upper triangular positions.
+
+        Args:
+            adj_mat: 2D binary adjacency matrix.
+        Returns:
+            Adjacency matrix with ones reflected upper triangular ones.
+        """
+        return adj_mat + adj_mat.T
 
 
 class ContinuousFlowFactory(NormalizingFlowFactory):
     """Constructs a FFJORD continuous normalizing flow."""
     def __init__(self, config: dict):
-        self.config = config
+        super().__init__(config)
         self.parse_config(config)
 
     def parse_config(self, config: dict):
@@ -108,7 +191,7 @@ class ContinuousFlowFactory(NormalizingFlowFactory):
         )
         return cnf
 
-    def build_flow(self) -> ContinuousFlow:
+    def _build_flow(self) -> ContinuousFlow:
         """Builds a chain of continuous normalizing flows.
 
         Returns:

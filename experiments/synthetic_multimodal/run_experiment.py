@@ -15,11 +15,14 @@ from data.make_adj_mtx import generate_adj_mat_uniform
 from data.synthetic_multimodal import SyntheticMultimodalDataset
 
 from strnn.models.discrete_flows import AutoregressiveFlowFactory
+from strnn.models.continuous_flows import AdjacencyModifier
 from strnn.models.continuous_flows import ContinuousFlowFactory
 from strnn.models import NormalizingFlowLearner
 
 from strnn.models.config_constants import ADJ, INPUT_DIM
 from strnn.models.config_constants import BASE_MODEL, FLOW_STEPS, ODENET_HID
+
+from experiments.train_utils import CallbackComputeMMD
 
 from data.data_utils import DSTuple
 
@@ -30,14 +33,19 @@ parser.add_argument("--data_random_seed", type=int, default=2547)
 parser.add_argument("--n_samples", type=int, default=5000)
 parser.add_argument("--split_ratio", type=eval, default=[0.6, 0.2, 0.2])
 
+parser.add_argument("--adj_mod", type=eval)
+
 parser.add_argument("--batch_size", type=int, default=256)
 parser.add_argument("--max_epochs", type=int, default=100)
 parser.add_argument("--lr", type=float, default=1e-3)
-parser.add_argument("--patience", type=int, default=-1)
+parser.add_argument("--patience", type=int, default=10)
+parser.add_argument("--mmd_n_samples", type=int)
+parser.add_argument("--mmd_gamma", type=float, default=0.1)
 
 parser.add_argument("--model_config", type=str, required=True)
 parser.add_argument("--flow_steps", type=int, default=3)
-parser.add_argument("--hidden_dim", type=eval, default=(100, 100))
+parser.add_argument("--hidden_width", type=int, default=300)
+parser.add_argument("--hidden_depth", type=int, default=2)
 parser.add_argument("--model_seed", type=int, default=2547)
 
 parser.add_argument("--wandb_name", type=str)
@@ -87,6 +95,8 @@ def load_data(
 
 
 def main():
+    args.hidden_dim = tuple([args.hidden_width] * args.hidden_depth)
+
     generator, data = load_data(args.dataset_name, args.n_samples,
                                 args.split_ratio, args.data_random_seed)
 
@@ -101,9 +111,14 @@ def main():
         model_config = config[args.model_config]
 
     model_config[INPUT_DIM] = generator.data_dim
-    model_config[ADJ] = generator.adj_mat
     model_config[FLOW_STEPS] = args.flow_steps
     model_config[ODENET_HID] = args.hidden_dim
+
+    adj_mat = generator.adj_mat
+    if args.adj_mod is not None:
+        adj_modifier = AdjacencyModifier(args.adj_mod)
+        adj_mat = adj_modifier.modify_adjacency(adj_mat)
+    model_config[ADJ] = adj_mat
 
     model_factory = MODEL_CONSTR_MAP[model_config[BASE_MODEL]](model_config)
 
@@ -115,9 +130,16 @@ def main():
 
     learner = NormalizingFlowLearner(model, args.lr)
 
-    train_args = {"max_epochs": args.max_epochs}
+    train_args = {
+        "max_epochs": args.max_epochs,
+        "callbacks": []
+    }
 
     if args.wandb_name:
+        # Reset adjacency to ground truth for persistence. Any modifiers
+        # are stored and can be recreated.
+        model_config[ADJ] = generator.adj_mat
+
         all_config = vars(args)
         all_config.update(model_config)
 
@@ -127,7 +149,11 @@ def main():
 
     if args.patience != -1:
         early_stopping = EarlyStopping("val_loss", patience=args.patience)
-        train_args["callbacks"] = [early_stopping]
+        train_args["callbacks"].append(early_stopping)
+
+    if args.mmd_n_samples > 0:
+        mmd_callback = CallbackComputeMMD(args.mmd_n_samples, args.mmd_gamma)
+        train_args["callbacks"].append(mmd_callback)
 
     trainer = pl.Trainer(**train_args)
 
