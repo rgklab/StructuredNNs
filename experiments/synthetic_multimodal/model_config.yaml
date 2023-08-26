@@ -1,4 +1,4 @@
-ode_defaults: &defaults
+ode_defaults: &ode_defaults
   base_model: "CNF"
   odenet_act_type: "tanh"
   ode_divergence_fn: "brute_force"
@@ -13,20 +13,47 @@ ode_defaults: &defaults
 
 
 ffjord_baseline:
-  <<: *defaults
+  <<: *ode_defaults
   odenet_lin_type: "fully_connected"
   opt_type: null
   opt_args: null
 
 
 ffjord_strode:
-  <<: *defaults
+  <<: *ode_defaults
   odenet_lin_type: "strnn"
   opt_type: "greedy"
   opt_args: {}
 
 ffjord_weilbach:
-  <<: *defaults
+  <<: *ode_defaults
   odenet_lin_type: "weilbach"
   opt_type: null
   opt_args: null
+
+straf_base: &straf_defaults
+  base_model: "ANF"
+  opt_type: "greedy"
+  opt_args: {}
+  flow_permute: False
+  conditioner_type: "strnn"
+  conditioner_act_type: "relu"
+  normalizer_type: "umnn"
+  umnn_int_solver: "CC"
+  umnn_int_step: 20
+
+  umnn_int_hid_dim: [100, 100, 100]
+  n_param_per_var: 30
+
+gnf_base: &gnf_defaults
+  base_model: "ANF"
+  flow_permute: True
+  conditioner_type: "gnf"
+  conditioner_act_type: "relu"
+  normalizer_type: "umnn"
+  umnn_int_solver: "CC"
+  umnn_int_step: 20
+  gnf_conditioner_hot_encoding: True
+
+  umnn_int_hid_dim: [100, 100, 100]
+  n_param_per_var: 30

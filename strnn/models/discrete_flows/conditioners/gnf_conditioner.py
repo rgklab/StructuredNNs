@@ -15,7 +15,7 @@ class GNFMLP(nn.Module):
     def __init__(
         self,
         input_dim: int,
-        hidden_dim: list[int],
+        hidden_dim: tuple[int],
         output_dim: int,
         act_type: str
     ):
@@ -31,8 +31,8 @@ class GNFMLP(nn.Module):
 
         act_fn = NONLINEARITIES[act_type]
 
-        l1 = [input_dim] + hidden_dim
-        l2 = hidden_dim + [output_dim]
+        l1 = [input_dim] + list(hidden_dim)
+        l2 = list(hidden_dim) + [output_dim]
 
         layers = []
         for h1, h2 in zip(l1, l2):
@@ -60,7 +60,7 @@ class GNFConditioner(Conditioner):
     def __init__(
         self,
         input_dim: int,
-        hidden_dim: list[int],
+        hidden_dim: tuple[int],
         n_out_param: int,
         act_type: str,
         hot_encoding: bool,
@@ -70,7 +70,7 @@ class GNFConditioner(Conditioner):
 
         Args:
             input_dim: Input dimension.
-            hidden_dim: List of hidden widths.
+            hidden_dim: Tuple of hidden widths.
             n_out_param: Number of output parameters per input variable.
             act_type: Activation function used between layers.
         """

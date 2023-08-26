@@ -18,9 +18,7 @@ from strnn.models.discrete_flows import AutoregressiveFlowFactory
 from strnn.models.continuous_flows import AdjacencyModifier
 from strnn.models.continuous_flows import ContinuousFlowFactory
 from strnn.models import NormalizingFlowLearner
-
-from strnn.models.config_constants import ADJ, INPUT_DIM
-from strnn.models.config_constants import BASE_MODEL, FLOW_STEPS, ODENET_HID
+from strnn.models.config_constants import *
 
 from experiments.train_utils import CallbackComputeMMD
 
@@ -39,7 +37,7 @@ parser.add_argument("--batch_size", type=int, default=256)
 parser.add_argument("--max_epochs", type=int, default=100)
 parser.add_argument("--lr", type=float, default=1e-3)
 parser.add_argument("--patience", type=int, default=10)
-parser.add_argument("--mmd_n_samples", type=int)
+parser.add_argument("--mmd_samples", type=int)
 parser.add_argument("--mmd_gamma", type=float, default=0.1)
 
 parser.add_argument("--model_config", type=str, required=True)
@@ -47,6 +45,10 @@ parser.add_argument("--flow_steps", type=int, default=3)
 parser.add_argument("--hidden_width", type=int, default=300)
 parser.add_argument("--hidden_depth", type=int, default=2)
 parser.add_argument("--model_seed", type=int, default=2547)
+
+parser.add_argument("--umnn_hidden_width", type=int, default=100)
+parser.add_argument("--umnn_hidden_depth", type=int, default=3)
+parser.add_argument("--n_param_per_var", type=int, default=30)
 
 parser.add_argument("--wandb_name", type=str)
 args = parser.parse_args()
@@ -94,9 +96,36 @@ def load_data(
     return generator, (train, val, test)
 
 
-def main():
-    args.hidden_dim = tuple([args.hidden_width] * args.hidden_depth)
+def parse_args_model(args: argparse.Namespace, config: dict) -> dict:
+    """Updates model config with command line arguments.
 
+    Args:
+        args: Command line arguments.
+        config: Model config.
+
+    Returns:
+        Config dictionary updated with command line arguments.
+    """
+    hidden_dim = tuple([args.hidden_width] * args.hidden_depth)
+
+    if config[BASE_MODEL] == "ANF":
+        config[COND_HID] = hidden_dim
+
+        umnn_hid_dim = tuple([args.umnn_hidden_width] * args.umnn_hidden_depth)
+        config[UMNN_INT_HID] = umnn_hid_dim
+
+        config[N_PARAM_PER_VAR] = args.n_param_per_var
+    elif config[BASE_MODEL] == "CNF":
+        config[ODENET_HID] = hidden_dim
+    else:
+        raise ValueError("Unknown base model type.")
+
+    config[FLOW_STEPS] = args.flow_steps
+
+    return config
+
+
+def main():
     generator, data = load_data(args.dataset_name, args.n_samples,
                                 args.split_ratio, args.data_random_seed)
 
@@ -111,8 +140,13 @@ def main():
         model_config = config[args.model_config]
 
     model_config[INPUT_DIM] = generator.data_dim
-    model_config[FLOW_STEPS] = args.flow_steps
-    model_config[ODENET_HID] = args.hidden_dim
+    model_config = parse_args_model(args, model_config)
+
+    adj_mat = generator.adj_mat
+    if args.adj_mod is not None:
+        adj_modifier = AdjacencyModifier(args.adj_mod)
+        adj_mat = adj_modifier.modify_adjacency(adj_mat)
+    model_config[ADJ] = adj_mat
 
     adj_mat = generator.adj_mat
     if args.adj_mod is not None:
@@ -151,8 +185,8 @@ def main():
         early_stopping = EarlyStopping("val_loss", patience=args.patience)
         train_args["callbacks"].append(early_stopping)
 
-    if args.mmd_n_samples > 0:
-        mmd_callback = CallbackComputeMMD(args.mmd_n_samples, args.mmd_gamma)
+    if args.mmd_samples > 0:
+        mmd_callback = CallbackComputeMMD(args.mmd_samples, args.mmd_gamma)
         train_args["callbacks"].append(mmd_callback)
 
     trainer = pl.Trainer(**train_args)

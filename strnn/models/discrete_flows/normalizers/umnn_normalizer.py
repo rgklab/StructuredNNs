@@ -27,17 +27,17 @@ class IntegrandNet(nn.Module):
 
     Code taken from: https://github.com/AWehenkel/Graphical-Normalizing-Flows.
     """
-    def __init__(self, hidden_dim: list[int], n_param_per_dim: int):
+    def __init__(self, hidden_dim: tuple[int], n_param_per_dim: int):
         """Initializes IntegrandNet.
 
         Args:
-            hidden_dim: List of hidden widths of network.
+            hidden_dim: Tuple of hidden widths of network.
             n_param_per_dim: Input dimension, number of parameters per
                 dimension outputted by an upstream flow conditioner.
         """
         super().__init__()
-        l1 = [1 + n_param_per_dim] + hidden_dim
-        l2 = hidden_dim + [1]
+        l1 = [1 + n_param_per_dim] + list(hidden_dim)
+        l2 = list(hidden_dim) + [1]
         layers = []
         for h1, h2 in zip(l1, l2):
             layers += [nn.Linear(h1, h2), nn.ReLU()]
@@ -71,7 +71,7 @@ class MonotonicNormalizer(Normalizer):
     """
     def __init__(
         self,
-        integrand_hidden: list[int],
+        integrand_hidden: tuple[int],
         n_param_per_dim: int,
         nb_steps: int,
         solver: str
@@ -104,7 +104,7 @@ class MonotonicNormalizer(Normalizer):
         Returns:
             Transformed data and jacobian determinant.
         """
-        x0 = torch.zeros(x.shape).to(x.device)
+        x0 = torch.zeros(x.shape).to(x)
         xT = x
         z0 = h[:, :, 0]
         h = h.permute(0, 2, 1).contiguous().view(x.shape[0], -1)
