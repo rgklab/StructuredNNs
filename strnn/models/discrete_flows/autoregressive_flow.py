@@ -81,7 +81,7 @@ class AutoregressiveFlow(NormalizingFlow):
         Returns:
             Transformed data and jacobian determinant.
         """
-        jac_tot = torch.zeros(x.shape[0])
+        jac_tot = torch.zeros(x.shape[0]).to(x)
 
         inv_idx = torch.arange(x.shape[1] - 1, -1, -1).long()
         for step in self.steps:
