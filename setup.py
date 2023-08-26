@@ -10,7 +10,8 @@ setup(
         "torch>=2.0.0",
         "pytorch-lightning>=2.0.0",
         "scikit-learn",
-        "torchdiffeq>=0.2.3 "
+        "torchdiffeq>=0.2.3",
+        "UMNN"
     ],
     python_requires='~=3.11',
     classifiers=[

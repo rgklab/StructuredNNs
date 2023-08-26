@@ -25,19 +25,29 @@ class NormalizingFlow(nn.Module, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def invert(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def invert(self, z: torch.Tensor) -> torch.Tensor:
         pass
 
 
 class NormalizingFlowFactory(metaclass=ABCMeta):
     """Interface for a normalizing flow factory."""
+    def __init__(self, config: dict):
+        self.config = config
+
     @abstractmethod
     def parse_config(self, config: dict):
         pass
 
     @abstractmethod
-    def build_flow(self) -> NormalizingFlow:
+    def _build_flow(self) -> NormalizingFlow:
         pass
+
+    def build_flow(self) -> NormalizingFlow:
+        """Wraps concrete flow builder to add config as an attribute."""
+        flow = self._build_flow()
+        flow.config = self.config
+
+        return flow
 
 
 class NormalizingFlowLearner(pl.LightningModule):
@@ -52,7 +62,7 @@ class NormalizingFlowLearner(pl.LightningModule):
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         return self.flow.forward(x)
 
-    def invert(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def invert(self, z: torch.Tensor) -> torch.Tensor:
         return self.flow.invert(z)
 
     def sample(self, n_sample: int) -> torch.Tensor:
@@ -65,7 +75,7 @@ class NormalizingFlowLearner(pl.LightningModule):
         """
         out_dim = (n_sample, self.flow.config[INPUT_DIM])
         z_samples = torch.normal(0, 1, size=out_dim, device=self.device)
-        x_samples = self.invert(z_samples)[0]
+        x_samples = self.invert(z_samples)
 
         return x_samples
 

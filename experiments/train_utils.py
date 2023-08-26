@@ -41,7 +41,8 @@ class CallbackComputeMMD(Callback):
 
         x_samples = []
         for _ in range(self.n_samples // batch_size):
-            x_samples.append(nf.sample(batch_size).cpu().numpy())
+            samples = nf.sample(batch_size).cpu().numpy()
+            x_samples.append(samples)
 
         all_x_samples = np.concatenate(x_samples)
         val_dataset_np = val_dl.dataset.cpu().numpy()

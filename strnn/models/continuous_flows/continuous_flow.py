@@ -15,16 +15,36 @@ from ...models import TTuple
 
 
 class ContinuousFlow(NormalizingFlow):
-    def __init__(self, ffjord_cnf: SequentialFlow, config: dict):
+    """Wraps FFJORD CNF to abide to NormalizingFlow interface."""
+
+    def __init__(self, ffjord_cnf: SequentialFlow):
+        """Initializes ContinuousFlow.
+
+        Args:
+            ffjord_cnf: FFJORD CNF module.
+        """
         super().__init__()
         self.model = ffjord_cnf
-        self.config = config
 
     def forward(self, x: torch.Tensor) -> TTuple:
+        """Computes forward CNF pass.
+
+        Args:
+            x: Input data.
+        Return:
+            Transformed data, and jacobian determinant.
+        """
         return self.model(x, reverse=False)
 
-    def invert(self, z: torch.Tensor) -> TTuple:
-        return self.model(z, reverse=True)
+    def invert(self, z: torch.Tensor) -> torch.Tensor:
+        """Computes inverse transform from latent to data space.
+
+        Args:
+            z: Input data from latent distribution.
+        Return:
+            Transformed data.
+        """
+        return self.model(z, reverse=True)[0]
 
 
 class AdjacencyModifier:
@@ -90,7 +110,7 @@ class AdjacencyModifier:
 class ContinuousFlowFactory(NormalizingFlowFactory):
     """Constructs a FFJORD continuous normalizing flow."""
     def __init__(self, config: dict):
-        self.config = config
+        super().__init__(config)
         self.parse_config(config)
 
     def parse_config(self, config: dict):
@@ -171,7 +191,7 @@ class ContinuousFlowFactory(NormalizingFlowFactory):
         )
         return cnf
 
-    def build_flow(self) -> ContinuousFlow:
+    def _build_flow(self) -> ContinuousFlow:
         """Builds a chain of continuous normalizing flows.
 
         Returns:
@@ -196,5 +216,5 @@ class ContinuousFlowFactory(NormalizingFlowFactory):
 
         model.apply(_set)
 
-        cnf = ContinuousFlow(model, self.config)
+        cnf = ContinuousFlow(model)
         return cnf
