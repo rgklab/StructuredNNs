@@ -83,7 +83,7 @@ class NormalizingFlowLearner(pl.LightningModule):
         z, jac = self.flow.forward(batch)
         logpz = standard_normal_logprob(z)
 
-        logpx = logpz - jac
+        logpx = logpz + jac
         loss = -torch.mean(logpx)
 
         self.log("train_loss", loss.item())
@@ -93,7 +93,7 @@ class NormalizingFlowLearner(pl.LightningModule):
         z, jac = self.flow.forward(batch)
         logpz = standard_normal_logprob(z)
 
-        logpx = logpz - jac
+        logpx = logpz + jac
         loss = -torch.mean(logpx)
 
         self.log("val_loss", loss.item())

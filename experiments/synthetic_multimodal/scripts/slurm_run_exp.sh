@@ -12,4 +12,4 @@ source activate strnn
 cd ..
 python run_experiment.py --dataset_name multimodal --model_config $1 \
     --wandb_name strnn_mm --flow_steps $2 --hidden_width $3 --hidden_depth $4 \
-    --lr $5
+    --lr $5 --mmd_samples 512
