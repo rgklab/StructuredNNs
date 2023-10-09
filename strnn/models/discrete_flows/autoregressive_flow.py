@@ -84,6 +84,7 @@ class AutoregressiveFlow(NormalizingFlow):
         jac_tot = torch.zeros(x.shape[0]).to(x)
 
         inv_idx = torch.arange(x.shape[1] - 1, -1, -1).long()
+
         for step in self.steps:
             z, jac = step(x)
             jac_tot += jac
@@ -103,7 +104,7 @@ class AutoregressiveFlow(NormalizingFlow):
         Returns:
             Transformed data.
         """
-        for step in range(len(self.steps)):
+        for step in range(1, len(self.steps) + 1):
             x = self.steps[-step].invert(z)
 
             if self.permute:
