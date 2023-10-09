@@ -53,3 +53,5 @@ docs/_build/
 .vscode/
 lightning_logs/
 wandb/
+.ipynb_checkpoints/
+logs/

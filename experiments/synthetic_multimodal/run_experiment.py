@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.utilities import rank_zero_only
 
 from data.data_utils import split_dataset, standardize_data
 from data.make_adj_mtx import generate_adj_mat_uniform
@@ -24,27 +25,27 @@ from experiments.train_utils import CallbackComputeMMD
 
 from data.data_utils import DSTuple
 
-
 parser = argparse.ArgumentParser("Runs flows on multimodal synthetic dataset.")
 parser.add_argument("--dataset_name", type=str, default="multimodal")
 parser.add_argument("--data_random_seed", type=int, default=2547)
-parser.add_argument("--n_samples", type=int, default=5000)
+parser.add_argument("--n_samples", type=int, default=3000)
 parser.add_argument("--split_ratio", type=eval, default=[0.6, 0.2, 0.2])
 
 parser.add_argument("--adj_mod", type=eval)
 
 parser.add_argument("--batch_size", type=int, default=256)
-parser.add_argument("--max_epochs", type=int, default=100)
+parser.add_argument("--max_epochs", type=int, default=150)
 parser.add_argument("--lr", type=float, default=1e-3)
 parser.add_argument("--patience", type=int, default=10)
 parser.add_argument("--mmd_samples", type=int)
 parser.add_argument("--mmd_gamma", type=float, default=0.1)
+parser.add_argument("--scheduler", type=str, default="fixed")
 
 parser.add_argument("--model_config", type=str, required=True)
 parser.add_argument("--flow_steps", type=int, default=3)
 parser.add_argument("--hidden_width", type=int, default=300)
 parser.add_argument("--hidden_depth", type=int, default=2)
-parser.add_argument("--model_seed", type=int, default=2547)
+parser.add_argument("--model_seed", type=int, default=2541)
 
 parser.add_argument("--umnn_hidden_width", type=int, default=100)
 parser.add_argument("--umnn_hidden_depth", type=int, default=3)
@@ -88,6 +89,7 @@ def load_data(
         data_config = config[dataset_name]
         data_config[A_GEN_FN_KEY] = A_GEN_FN_MAP[data_config[A_GEN_FN_KEY]]
 
+    np.random.seed(random_seed)
     generator = SyntheticMultimodalDataset(**data_config)
     data = generator.generate_samples(n_samples, random_seed)
     standard_data = standardize_data(data)
@@ -115,8 +117,10 @@ def parse_args_model(args: argparse.Namespace, config: dict) -> dict:
         config[UMNN_INT_HID] = umnn_hid_dim
 
         config[N_PARAM_PER_VAR] = args.n_param_per_var
+
     elif config[BASE_MODEL] == "CNF":
         config[ODENET_HID] = hidden_dim
+
     else:
         raise ValueError("Unknown base model type.")
 
@@ -162,11 +166,13 @@ def main():
 
     model = model_factory.build_flow()
 
-    learner = NormalizingFlowLearner(model, args.lr)
+    learner = NormalizingFlowLearner(model, args.lr, args.scheduler)
 
     train_args = {
         "max_epochs": args.max_epochs,
-        "callbacks": []
+        "callbacks": [],
+        "enable_checkpointing": False,
+        "deterministic": True
     }
 
     if args.wandb_name:
@@ -178,7 +184,10 @@ def main():
         all_config.update(model_config)
 
         wandb_logger = WandbLogger(project=args.wandb_name)
-        wandb_logger.experiment.config.update(all_config)
+
+        if rank_zero_only.rank == 0:
+            wandb_logger.experiment.config.update(all_config)
+
         train_args["logger"] = wandb_logger
 
     if args.patience != -1:

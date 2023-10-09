@@ -103,7 +103,7 @@ class AutoregressiveFlow(NormalizingFlow):
         Returns:
             Transformed data.
         """
-        for step in range(len(self.steps)):
+        for step in range(1, len(self.steps) + 1):
             x = self.steps[-step].invert(z)
 
             if self.permute:

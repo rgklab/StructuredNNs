@@ -42,9 +42,6 @@ straf_base: &straf_defaults
   umnn_int_solver: "CC"
   umnn_int_step: 20
 
-  umnn_int_hid_dim: [100, 100, 100]
-  n_param_per_var: 30
-
 gnf_base: &gnf_defaults
   base_model: "ANF"
   flow_permute: True
@@ -54,6 +51,3 @@ gnf_base: &gnf_defaults
   umnn_int_solver: "CC"
   umnn_int_step: 20
   gnf_conditioner_hot_encoding: True
-
-  umnn_int_hid_dim: [100, 100, 100]
-  n_param_per_var: 30

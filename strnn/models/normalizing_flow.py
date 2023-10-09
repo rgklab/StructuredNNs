@@ -54,10 +54,11 @@ class NormalizingFlowLearner(pl.LightningModule):
     """PyTorch-Lightning wrapper for NormalizingFlows."""
     device: torch.device
 
-    def __init__(self, flow: NormalizingFlow, lr: float):
+    def __init__(self, flow: NormalizingFlow, lr: float, scheduler: str):
         super().__init__()
         self.flow = flow
         self.lr = lr
+        self.scheduler = scheduler
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         return self.flow.forward(x)
@@ -83,7 +84,7 @@ class NormalizingFlowLearner(pl.LightningModule):
         z, jac = self.flow.forward(batch)
         logpz = standard_normal_logprob(z)
 
-        logpx = logpz - jac
+        logpx = logpz + jac
         loss = -torch.mean(logpx)
 
         self.log("train_loss", loss.item())
@@ -93,7 +94,7 @@ class NormalizingFlowLearner(pl.LightningModule):
         z, jac = self.flow.forward(batch)
         logpz = standard_normal_logprob(z)
 
-        logpx = logpz - jac
+        logpx = logpz + jac
         loss = -torch.mean(logpx)
 
         self.log("val_loss", loss.item())
@@ -101,4 +102,27 @@ class NormalizingFlowLearner(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.flow.parameters(), lr=self.lr)
-        return optimizer
+
+        if self.scheduler == "plateau":
+            scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                patience=5,
+            )
+        elif self.scheduler == "step":
+            scheduler = optim.lr_scheduler.MultiStepLR(
+                optimizer,
+                milestones=[40],
+                gamma=0.1
+            )
+        elif self.scheduler == "fixed":
+            return optimizer
+        else:
+            raise ValueError("Unknown Scheduler.")
+
+        out = {
+            "optimizer": optimizer,
+            "lr_scheduler": scheduler,
+            "monitor": "val_loss"
+        }
+
+        return out
