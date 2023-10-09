@@ -1,8 +1,12 @@
-model_name=(gnf_base straf_base)
+model_name=(gnf_base)
 nf_steps=(1 5 10)
-hidden_width=(50 500)
-hidden_depth=(2 3)
-lrs=(5e-3 1e-3 1e-4)
+hidden_width=(2000)
+hidden_depth=(3 4)
+lrs=(1e-3 1e-4)
+n_width=(500 250)
+n_depth=(4 6)
+n_size=(25 50)
+sched=(plateau)
 
 for mn in ${model_name[@]}
 do
@@ -14,7 +18,19 @@ do
             do
                 for lr in ${lrs[@]}
                 do
-                    sbatch slurm_run_exp.sh $mn $nfs $w $d $lr
+                    for nw in ${n_width[@]}
+                    do
+                        for nd in ${n_depth[@]}
+                        do
+                            for ns in ${n_size[@]}
+                            do
+                                for s in ${sched[@]}
+                                do
+                                    sbatch slurm_run_disc_exp.sh $mn $nfs $w $d $lr $nw $nd $ns $s
+                                done
+                            done
+                        done
+                    done
                 done
             done
         done
