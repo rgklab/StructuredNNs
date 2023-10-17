@@ -4,7 +4,8 @@ Code inspired by: https://github.com/AWehenkel/Graphical-Normalizing-Flows.
 import torch
 import torch.nn as nn
 
-from .conditioners import Conditioner, StrNNConditioner, GNFConditioner
+from .conditioners import Conditioner, StrNNConditioner, GNFConditioner, \
+    MADEConditioner
 from .normalizers import Normalizer, AffineNormalizer, MonotonicNormalizer
 
 from ..normalizing_flow import NormalizingFlow, NormalizingFlowFactory
@@ -147,6 +148,8 @@ class AutoregressiveFlowFactory(NormalizingFlowFactory):
             self.opt_args = config[OPT_ARGS]
         elif self.cond_type == "gnf":
             self.gnf_hot = config[GNF_HOT]
+        elif self.cond_type == "made":
+            pass
         else:
             raise ValueError("Unknown conditioner type.")
 
@@ -177,6 +180,13 @@ class AutoregressiveFlowFactory(NormalizingFlowFactory):
                 self.adj,
                 self.opt_type,
                 self.opt_args
+            )
+        elif self.cond_type == "made":
+            conditioner = MADEConditioner(
+                self.input_dim,
+                self.cond_hid,
+                self.cond_out,
+                self.cond_act
             )
         elif self.cond_type == "gnf":
             conditioner = GNFConditioner(
