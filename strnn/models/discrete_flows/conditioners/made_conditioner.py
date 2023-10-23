@@ -107,4 +107,4 @@ class MADEConditioner(Conditioner):
             layer.set_mask(m)
 
     def forward(self, x):
-        return self.net(x)
+        return self.net(x).view(x.shape[0], -1, x.shape[1]).permute(0, 2, 1)
