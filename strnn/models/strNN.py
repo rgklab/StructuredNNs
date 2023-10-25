@@ -1,10 +1,12 @@
+import os
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import pytorch_lightning as pl
 
-from .models.model_utils import NONLINEARITIES
+from strnn.models.model_utils import NONLINEARITIES
 
 
 class MaskedLinear(nn.Linear):
@@ -37,19 +39,19 @@ class StrNN(pl.LightningModule):
             nin: int, hidden_sizes: tuple[int, ...], nout: int,
             opt_type: str = 'greedy',
             opt_args: dict = {'var_penalty_weight': 0.0},
-            precompute_masks: np.ndarray | None = None,
+            precomputed_masks: np.ndarray | None = None,
             adjacency: np.ndarray | None = None,
             activation: str = 'relu'):
         """
         Initializes a Structured Neural Network (StrNN)
-        :param nin:
-        :param hidden_sizes:
-        :param nout:
-        :param opt_type:
-        :param opt_args:
-        :param precompute_masks:
-        :param adjacency:
-        :param activation:
+        :param nin: input dimension
+        :param hidden_sizes: list of hidden layer sizes
+        :param nout: output dimension
+        :param opt_type: optimization type: greedy, zuko, MADE
+        :param opt_args: additional optimization algorithm params
+        :param precomputed_masks: previously stored masks, use directly
+        :param adjacency: the adjacency matrix, nout by nin
+        :param activation: activation function to use in this NN
         """
         super().__init__()
         self.save_hyperparameters()
@@ -60,7 +62,7 @@ class StrNN(pl.LightningModule):
         self.nout = nout
         self.opt_type = opt_type
         self.opt_args = opt_args
-        self.precompute_masks = precompute_masks
+        self.precomputed_masks = precomputed_masks
         self.A = adjacency
 
         # Define activation
@@ -97,22 +99,14 @@ class StrNN(pl.LightningModule):
         """
         :return: None
         """
-        if self.precompute_masks is not None:
+        if self.precomputed_masks is not None:
             # Load precomputed masks if provided
-            masks = self.precompute_masks
+            masks = self.precomputed_masks
         else:
             masks = self.factorize_masks()
 
         self.masks = masks
-        self.check_masks()
-
-        # Handle the case where nout = nin * k, for integer k > 1
-        # Set the last mask to have k times the number of outputs
-        if self.nout > self.nin:
-            assert self.nout % self.nin == 0
-            k = int(self.nout / self.nin)
-            # replicate the mask across the other outputs
-            self.masks[-1] = np.concatenate([self.masks[-1]] * k, axis=1)
+        assert self.check_masks(), "Mask check failed!"
 
         # Set the masks in all MaskedLinear layers
         layers = [l for l in self.net.modules() if isinstance(l, MaskedLinear)]
@@ -132,24 +126,28 @@ class StrNN(pl.LightningModule):
         # TODO: We need to handle default None case (maybe init an FC layer?)
 
         if self.opt_type == 'Zuko':
-            raise NotImplementedError
-            masks = self.factorize_masks_zuko(adj_mtx)
+            # Zuko creates all masks at once
+            masks = self.factorize_masks_zuko(self.hidden_sizes)
+        else:
+            # All per-layer factorization algos
+            for l in self.hidden_sizes:
+                if self.opt_type == 'greedy':
+                    (M1, M2) = self.factorize_single_mask_greedy(adj_mtx, l)
+                elif self.opt_type == 'MADE':
+                    (M1, M2) = self.factorize_single_mask_MADE(adj_mtx, l)
+                else:
+                    raise ValueError(f'{self.opt_type} is NOT an implemented optimization type!')
 
-        for l in self.hidden_sizes:
-            if self.opt_type == 'greedy':
-                (M1, M2) = self.factorize_single_mask_greedy(adj_mtx, l)
-            elif self.opt_type == 'MADE':
-                (M1, M2) = self.factorize_single_mask_MADE(adj_mtx, l)
-            else:
-                raise ValueError(f'{self.opt_type} is NOT an implemented optimization type!')
+                # Update the adjacency structure for recursive call
+                adj_mtx = M1
+                masks = masks + [M2.T]  # take transpose for size: (n_inputs x n_hidden/n_output)
+            masks = masks + [M1.T]
 
-            # Update the adjacency structure for recursive call
-            adj_mtx = M1
-            masks = masks + [M2.T]  # take transpose for size: (n_inputs x n_hidden/n_output)
-        masks = masks + [M1.T]
         return masks
 
-    def factorize_single_mask_greedy(self, adj_mtx: np.ndarray, n_hidden: int):
+    def factorize_single_mask_greedy(
+            self, adj_mtx: np.ndarray, n_hidden: int
+    ) -> (np.ndarray, np.ndarray):
         """
         Factorize adj_mtx into M1 * M2
         :param adj_mtx: adjacency structure, n_outputs x n_inputs
@@ -180,11 +178,47 @@ class StrNN(pl.LightningModule):
     def factorize_single_mask_MADE(self, adj_mtx: np.ndarray, n_hidden: int):
         return None, None
 
+    def factorize_masks_zuko(
+            self, hidden_sizes: tuple[int]
+    ) -> list[np.ndarray]:
+        masks = []
+
+        adj_mtx = torch.from_numpy(self.A)
+        A_prime, inv = torch.unique(adj_mtx, dim=0, return_inverse=True)
+        n_deps = A_prime.sum(dim=-1)
+        P = (A_prime @ A_prime.T == n_deps).double()
+
+        for i, h_i in enumerate((*hidden_sizes, self.nout)):
+            if i > 0:
+                # Not the first mask
+                mask = P[:, indices]
+            else:
+                # First mask: just use rows from A
+                mask = A_prime
+
+            if sum(sum(mask)) == 0.0:
+                raise ValueError("The adjacency matrix leads to a null Jacobian.")
+
+            if i < len(hidden_sizes):
+                # Still on intermediate masks
+                reachable = mask.sum(dim=-1).nonzero().squeeze(dim=-1)
+                indices = reachable[torch.arange(h_i) % len(reachable)]
+                mask = mask[indices]
+            else:
+                # We are at the last mask
+                mask = mask[inv]
+
+            # Need to transpose all masks to match other algorithms
+            masks.append(mask.T.numpy())
+
+        return masks
+
     def check_masks(self) -> bool:
         """
-        Given the model's masks, [M1.T, M2.T, ..., Mk.T],
-        check if the matrix product Mk*...*M2*M1 respects A's
-        adjacency structure.
+        Given the model's masks, [M1, M2, ..., Mk],
+        check if the matrix product
+        (M1 * M2 * ... * Mk).T = Mk.T * ... * M2.T * M1.T
+        respects A's adjacency structure.
         :return: True or False
         """
         mask_prod = self.masks[0]
