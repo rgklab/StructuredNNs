@@ -1,0 +1,34 @@
+carefl:
+  base_model: "ANF"
+  flow_permute: False
+  conditioner_type: "made"
+  conditioner_act_type: "relu"
+  normalizer_type: "affine"
+
+
+flow:
+  nl: 5
+  nh: 10
+  batch_norm: false
+  prior_dist: 'laplace'
+  # for CL
+  # scale_base: true
+  # shift_base: true
+  # scale: true
+
+
+training:
+  epochs: 400
+  verbose: true
+  split: .8
+  seed: 0
+  batch_size: 32
+
+
+optim:
+  weight_decay: 0.000
+  optimizer: "Adam"
+  lr: 0.001
+  beta1: 0.9
+  amsgrad: false
+  scheduler: true
