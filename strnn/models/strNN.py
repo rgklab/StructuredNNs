@@ -36,7 +36,9 @@ class StrNN(pl.LightningModule):
     """
     def __init__(
             self,
-            nin: int, hidden_sizes: tuple[int, ...], nout: int,
+            nin: int,
+            hidden_sizes: tuple[int, ...],
+            nout: int,
             opt_type: str = 'greedy',
             opt_args: dict = {'var_penalty_weight': 0.0},
             precomputed_masks: np.ndarray | None = None,
@@ -108,6 +110,14 @@ class StrNN(pl.LightningModule):
         self.masks = masks
         assert self.check_masks(), "Mask check failed!"
 
+        # For when each input produces multiple outputs
+        # e.g.: each x_i gives mean and variance for Gaussian density estimation
+        if self.nout != self.A.shape[0]:
+            # Then nout should be an exact multiple of nin
+            assert self.nout % self.nin == 0
+            k = int(self.nout / self.nin)
+            # replicate the mask across the other outputs
+            masks[-1] = np.concatenate([masks[-1]] * k, axis=1)
         # Set the masks in all MaskedLinear layers
         layers = [l for l in self.net.modules() if isinstance(l, MaskedLinear)]
         for layer, mask in zip(layers, self.masks):
