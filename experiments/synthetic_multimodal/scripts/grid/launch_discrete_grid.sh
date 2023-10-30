@@ -1,11 +1,11 @@
-model_name=(gnf_base)
-nf_steps=(1 5 10)
-hidden_width=(2000)
-hidden_depth=(3 4)
+model_name=(anf_base gnf_base straf_base)
+nf_steps=(5 10)
+hidden_width=(25 50 500 1000)
+hidden_depth=(2 3 4)
 lrs=(1e-3 1e-4)
-n_width=(500 250)
-n_depth=(4 6)
-n_size=(25 50)
+n_width=(500 250 100)
+n_depth=(2 4 6)
+n_size=(25 50 10)
 sched=(plateau)
 
 for mn in ${model_name[@]}

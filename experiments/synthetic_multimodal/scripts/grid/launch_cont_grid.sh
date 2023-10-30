@@ -1,6 +1,6 @@
 model_name=(ffjord_weilbach ffjord_baseline ffjord_strode)
 nf_steps=(1 5 10)
-hidden_width=(200 500 1000)
+hidden_width=(50 500)
 hidden_depth=(2 3 8)
 lrs=(5e-3 1e-3 1e-4)
 
@@ -14,7 +14,7 @@ do
             do
                 for lr in ${lrs[@]}
                 do
-                    sbatch slurm_run_exp.sh $mn $nfs $w $d $lr
+                    sbatch slurm_run_cont_exp.sh $mn $nfs $w $d $lr
                 done
             done
         done
