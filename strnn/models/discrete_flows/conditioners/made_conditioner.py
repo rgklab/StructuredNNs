@@ -51,7 +51,7 @@ class MADEConditioner(Conditioner):
 
         # define a simple MLP neural net
         self.net = []
-        hs = [input_dim] + hidden_dim + [nout]
+        hs = [input_dim] + list(hidden_dim) + [nout]
         for h0, h1 in zip(hs, hs[1:]):
             self.net.extend([
                 MaskedLinear(h0, h1),
