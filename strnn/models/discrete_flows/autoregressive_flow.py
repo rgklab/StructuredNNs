@@ -4,7 +4,8 @@ Code inspired by: https://github.com/AWehenkel/Graphical-Normalizing-Flows.
 import torch
 import torch.nn as nn
 
-from .conditioners import Conditioner, StrNNConditioner, GNFConditioner
+from .conditioners import Conditioner, StrNNConditioner, GNFConditioner, \
+    MADEConditioner
 from .normalizers import Normalizer, AffineNormalizer, MonotonicNormalizer
 
 from ..normalizing_flow import NormalizingFlow, NormalizingFlowFactory
@@ -84,7 +85,6 @@ class AutoregressiveFlow(NormalizingFlow):
         jac_tot = torch.zeros(x.shape[0]).to(x)
 
         inv_idx = torch.arange(x.shape[1] - 1, -1, -1).long()
-
         for step in self.steps:
             z, jac = step(x)
             jac_tot += jac
@@ -114,6 +114,23 @@ class AutoregressiveFlow(NormalizingFlow):
                 z = x
 
         return x
+
+    def invert_gnf(self, z: torch.Tensor) -> torch.Tensor:
+        """Performs inversion according to the GNF offical repo.
+
+        Importantly, variables are NOT re-permuted. This leads to
+        poor sample quality. The order of flow steps is also
+        incorrect due to an indexing error.
+
+        Args:
+            z: Input data from latent space.
+        Returns:
+            Transformed data.
+        """
+        for step in range(len(self.steps)):
+            z = self.steps[-step].invert(z)
+
+        return z
 
 
 class AutoregressiveFlowFactory(NormalizingFlowFactory):
@@ -148,6 +165,8 @@ class AutoregressiveFlowFactory(NormalizingFlowFactory):
             self.opt_args = config[OPT_ARGS]
         elif self.cond_type == "gnf":
             self.gnf_hot = config[GNF_HOT]
+        elif self.cond_type == "made":
+            pass
         else:
             raise ValueError("Unknown conditioner type.")
 
@@ -178,6 +197,13 @@ class AutoregressiveFlowFactory(NormalizingFlowFactory):
                 self.adj,
                 self.opt_type,
                 self.opt_args
+            )
+        elif self.cond_type == "made":
+            conditioner = MADEConditioner(
+                self.input_dim,
+                self.cond_hid,
+                self.cond_out,
+                self.cond_act
             )
         elif self.cond_type == "gnf":
             conditioner = GNFConditioner(

@@ -28,6 +28,11 @@ class NormalizingFlow(nn.Module, metaclass=ABCMeta):
     def invert(self, z: torch.Tensor) -> torch.Tensor:
         pass
 
+    def compute_loss(self, z: torch.Tensor, jac: torch.Tensor) -> torch.Tensor:
+        logpx = standard_normal_logprob(z) + jac
+        loss = -torch.mean(logpx)
+        return loss
+
 
 class NormalizingFlowFactory(metaclass=ABCMeta):
     """Interface for a normalizing flow factory."""

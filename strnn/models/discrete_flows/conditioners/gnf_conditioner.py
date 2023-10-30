@@ -103,7 +103,7 @@ class GNFConditioner(Conditioner):
         # own mask.
         batch = x.unsqueeze(1).expand(-1, self.input_dim, -1)
 
-        masked_input = (mask * batch).reshape(x.shape[0] * self.input_dim, -1)
+        masked_input = (batch * mask).reshape(x.shape[0] * self.input_dim, -1)
 
         if self.hot_encoding:
             # Append one hot encoding to inputs

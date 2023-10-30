@@ -55,3 +55,4 @@ lightning_logs/
 wandb/
 .ipynb_checkpoints/
 logs/
+experiments/synthetic_causality/output/*.pt

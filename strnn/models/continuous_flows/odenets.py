@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from ...strNN import StrNN
+from strnn.models.strNN import StrNN
 from ..model_utils import NONLINEARITIES
 
 from ...models import Array_like

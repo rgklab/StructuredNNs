@@ -33,4 +33,4 @@ class SequentialFlow(nn.Module):
 
         for i in inds:
             x, logpx = self.chain[i](x, logpx, reverse=reverse)
-        return x, logpx
+        return x, -logpx
