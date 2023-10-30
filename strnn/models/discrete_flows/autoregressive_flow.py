@@ -115,6 +115,23 @@ class AutoregressiveFlow(NormalizingFlow):
 
         return x
 
+    def invert_gnf(self, z: torch.Tensor) -> torch.Tensor:
+        """Performs inversion according to the GNF offical repo.
+
+        Importantly, variables are NOT re-permuted. This leads to
+        poor sample quality. The order of flow steps is also
+        incorrect due to an indexing error.
+
+        Args:
+            z: Input data from latent space.
+        Returns:
+            Transformed data.
+        """
+        for step in range(len(self.steps)):
+            z = self.steps[-step].invert(z)
+
+        return z
+
 
 class AutoregressiveFlowFactory(NormalizingFlowFactory):
     """Constructs AutoregressiveFlow."""

@@ -47,8 +47,9 @@ class SyntheticMultimodalDataset:
         self.mean_range = mean_range
         self.std_range = std_range
 
+        self.dist_params: None | list[dict] = None
+
         self.w_mat = self.generate_weight_mat()
-        self.dist_params = self.generate_distributions()
 
     def generate_weight_mat(self) -> np.ndarray:
         """Generates weight matrix describing relationships between nodes.
@@ -61,8 +62,134 @@ class SyntheticMultimodalDataset:
         weight_mat = self.adj_mat * weights
         return weight_mat
 
-    def generate_distributions(self) -> list[dict]:
-        """Generates parameters of data generation distributions."""
+    def _generate_independent(
+        self,
+        n_samples: int,
+        params: dict | None = None
+    ) -> tuple[np.ndarray, dict]:
+        """Generate samples from a independent variable distribution.
+
+        Args:
+            n_samples: Number of data samples to generate.
+            params: Optional distributional parameters.
+        Returns:
+            Array of sampled data of shape (n_samples) and dictionary of
+            distributional parameters.
+        """
+        if params is not None:
+            mix_weights = params["mixture"]
+            means = params["means"]
+            stds = params["stds"]
+        else:
+            mix_weights = np.random.dirichlet(alpha=np.ones(self.n_modes))
+            means = np.random.uniform(*self.mean_range, self.n_modes)
+            stds = np.random.uniform(*self.std_range, self.n_modes)
+
+        mode_data = []
+        for m in range(self.n_modes):
+            # Adds additional sample as a fix for rounding
+            mode_samp = int(n_samples * mix_weights[m]) + 1
+            mode = np.random.normal(means[m], stds[m], mode_samp)
+            mode_data.append(mode)
+
+        row_data = np.concatenate(mode_data)[:n_samples]
+
+        params = {
+            "independent": True,
+            "mixture": mix_weights,
+            "means": means,
+            "stds": stds
+        }
+
+        return row_data, params
+
+    def _generate_dependent(
+        self,
+        n_samples: int,
+        weights: np.ndarray,
+        data: np.ndarray,
+    ) -> tuple[np.ndarray, dict]:
+        """Generate samples from a dependent variable distribution.
+
+        Args:
+            n_samples: Number of data samples to generate.
+            weights: The weights describing dependency on prior variables.
+            data: Matrix containing values of prior variables.
+
+        Returns:
+            Array of sampled data of shape (n_samples) and dictionary of
+            distributional parameters.
+        """
+        row_mask = weights != 0
+        prior_rows_data = data[row_mask]
+
+        nonzero_weights = weights[weights != 0]
+
+        nz_weights = nonzero_weights[:, np.newaxis]
+        nz_weights = np.repeat(nz_weights, n_samples, axis=-1)
+
+        new_row_data = np.multiply(nz_weights, prior_rows_data)
+
+        new_row_data = new_row_data ** 2
+        new_row_data = np.sum(new_row_data, axis=0)
+        new_row_data = new_row_data ** 0.5
+
+        new_row_data += np.random.normal(size=n_samples)
+
+        params = {"independent": False, "weights": weights}
+        return new_row_data, params
+
+    def generate_samples(
+        self,
+        n_samples: int,
+        seed: int | None = None
+    ) -> np.ndarray:
+        """Generates samples from synthetic distribution.
+
+        Initializes distributional parameters if they are not initialized yet.
+
+        Simultaneous initialization / generation is left in as an option as
+        this sequence of RNG calls recreates the data distribution from
+        the initial submission.
+
+        Args:
+            n_samples: Number of data samples to generate.
+            seed: Optional fixed random seed.
+
+        Returns:
+            Array of sampled data of shape (n_samples, n_features).
+        """
+        if seed is not None:
+            np.random.seed(seed)
+
+        data_arr = np.zeros((self.w_mat.shape[0], n_samples))
+
+        dist_params = []
+
+        for i, row in enumerate(self.w_mat):
+            # Check if variable has dependencies
+            independent = len(self.w_mat[i][self.w_mat[i] != 0]) == 0
+
+            if self.dist_params is not None:
+                row_params = self.dist_params[i]
+            else:
+                row_params = None
+
+            if independent:
+                rd, params = self._generate_independent(n_samples, row_params)
+            else:
+                rd, params = self._generate_dependent(n_samples, row, data_arr)
+
+            data_arr[i] = rd
+            dist_params.append(params)
+
+        if self.dist_params is None:
+            self.dist_params = dist_params
+
+        return data_arr.T
+
+    def initialize_distributions(self):
+        """Initializes parameters of data generation distributions."""
         dist_params = []
 
         for row in self.w_mat:
@@ -83,55 +210,7 @@ class SyntheticMultimodalDataset:
             else:
                 dist_params.append({"independent": False, "weights": row})
 
-        return dist_params
-
-    def generate_samples(self, n_samples: int, seed: int = None) -> np.ndarray:
-        """Generates samples from data distribution.
-
-        Args:
-            n_samples: Number of data samples to generate.
-            seed: Optional random seed to use in data sampling.
-        Returns:
-            Array of sampled data of shape (n_samples, n_features).
-        """
-        if seed is not None:
-            np.random.seed(seed)
-
-        data_arr = np.zeros((self.w_mat.shape[0], n_samples))
-
-        for i, params in enumerate(self.dist_params):
-            if params["independent"]:
-                mode_data = []
-                for m in range(self.n_modes):
-                    # Adds additional sample as a fix for rounding
-                    mode_samples = int(n_samples * params["mixture"][m]) + 1
-                    mode = np.random.normal(params["means"][m],
-                                            params["stds"][m],
-                                            mode_samples)
-                    mode_data.append(mode)
-
-                row_data = np.concatenate(mode_data)[:n_samples]
-                data_arr[i] = row_data
-            else:
-                row_mask = params["weights"] != 0
-                prior_rows_data = data_arr[row_mask]
-
-                nonzero_weights = params["weights"][params["weights"] != 0]
-
-                nz_weights = nonzero_weights[:, np.newaxis]
-                nz_weights = np.repeat(nz_weights, n_samples, axis=-1)
-
-                new_row_data = np.multiply(nz_weights, prior_rows_data)
-
-                new_row_data = new_row_data ** 2
-                new_row_data = np.sum(new_row_data, axis=0)
-                new_row_data = new_row_data ** 0.5
-
-                new_row_data += np.random.normal(size=n_samples)
-
-                data_arr[i] = new_row_data
-
-        return data_arr.T
+        self.dist_params = dist_params
 
     @classmethod
     def init_from_param(cls, params: list[dict]) -> SyntheticMultimodalDataset:

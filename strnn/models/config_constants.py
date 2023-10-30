@@ -1,6 +1,7 @@
 BASE_MODEL = "base_model"
 INPUT_DIM = "input_dim"
 ADJ = "adjacency_matrix"
+ADJ_MOD = "adjacency_modifier"
 
 OPT_TYPE = "opt_type"
 OPT_ARGS = "opt_args"

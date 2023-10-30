@@ -57,6 +57,8 @@ def test_synthetic_multimodal_sample_seed_fixed():
         mean_range=(-5, 5),
         std_range=(1, 2))
 
+    dataset.initialize_distributions()
+
     samples_1 = dataset.generate_samples(n_samples, seed)
     samples_2 = dataset.generate_samples(n_samples, seed)
 
@@ -79,7 +81,10 @@ def test_synthetic_multimodal_param_initialize():
 
     adj_mat_1 = dataset.adj_mat
     w_mat_1 = dataset.w_mat
+
+    dataset.initialize_distributions()
     params_1 = dataset.dist_params
+
     samples_1 = dataset.generate_samples(n_samples, seed)
 
     dataset_new = SyntheticMultimodalDataset.init_from_param(params_1)
