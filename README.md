@@ -1,6 +1,6 @@
 # Structured Neural Networks
 
-**Official implementation of the NeurIPS 2023 paper [Structured Neural Networks for Density Estimation and Causal Inference](https://openreview.net/forum?id=GaUt5aVc2N).**
+**Official implementation of the NeurIPS 2023 paper [Structured Neural Networks for Density Estimation and Causal Inference](https://arxiv.org/abs/2311.02221).**
 
 ![](media/main_figure.png)
 
@@ -19,7 +19,7 @@ Please use the following citation if you use this code or methods in your own wo
     author = {Asic Q Chen, Ruian Shi, Xiang Gao, Ricardo Baptista, Rahul G Krishnan},
     booktitle = {Thirty-seventh Conference on Neural Information Processing Systems},
     year = {2023},
-    url = {https://openreview.net/forum?id=GaUt5aVc2N}
+    url = {https://arxiv.org/abs/2311.02221}
 }
 ```
 
