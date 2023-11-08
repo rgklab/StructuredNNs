@@ -25,7 +25,27 @@ Please use the following citation if you use this code or methods in your own wo
 
 ## Setup
 
-To use StrNN in your project, clone this repository and run `pip install -e .` from the project root to install any required dependencies. 
+To use StrNN in your project, clone this repository and run `pip install -e .` from the project root to install any required dependencies.
+
+## Quick Start
+
+The StrNN provides a drop-in replacement for a fully connected neural network that allows it to respect prescribed functional independencies between input variables.
+For example, given an adjacency matrix $A$, we can initialize an StrNN as such:
+
+```
+from strnn.models.strNN import StrNN
+
+A = np.array([
+    [0, 0, 0, 0],
+    [1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [1, 0, 1, 0]
+])
+
+strnn = StrNN()
+```
+
+The StrNN can be used for density estimation, for example when integrated into normalizing flows, as we show in the experiments below.
 
 ## Examples
 
