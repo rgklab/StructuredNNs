@@ -62,6 +62,49 @@ Scripts to reproduce all experiments from the paper can be found in the /experim
 
 ### Binary Density Estimation with StrNN
 
-### Real-valued Density Estimation with StrAF
+### Density Estimation with Structured Normalizing Flows
+The StrNN can be integrated into Normalizing Flow architectures to improve density estimation capabilities when an adjacency structure is known for the task. We insert the StrNN into autoregressive flows and continuous normalizing flows. It replaces the feed forward networks used to represent the conditioner and flow dynamics, respectively, allowing them to respect known structure. An example to initialize these flow estimators are shown below. Baseline flows are also implemented. 
+```
+from strnn.models.discrete_flows import AutoregressiveFlowFactory
+from strnn.models.continuous_flows import ContinuousFlowFactory
+
+A = np.array([
+    [0, 0, 0, 0],
+    [1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [1, 0, 1, 0]
+])
+
+af_config = {
+    "input_dim": A.shape[0],
+    "adjacency_matrix": A,
+    "base_model": "ANF",
+    "opt_type": "greedy",
+    "opt_args": {},
+    "conditioner_type": "strnn",
+    "conditioner_hid_dim": [50, 50],
+    "conditioner_act_type": "relu",
+    "normalizer_type": "umnn",
+    "umnn_int_solver": "CC",
+    "umnn_int_step": 20,
+    "umnn_int_hid_dim": [50, 50],
+    "flow_steps": 10,
+    "n_param_per_var": 25
+}
+
+straf = AutoregressiveFlowFactory(af_config)
+
+x = torch.randn(A.shape[0])
+z = straf(x)
+x_bar = straf.invert(z)
+
+
+cnf_config = {} # See model_config.yaml for values
+strcnf = ContinuousFlowFactory(cnf_config)
+z = strcnf(x)
+x_bar = strcnf.invert(z)
+```
+
+See `experiments/synthetic_multimodal/config/model_config.yaml` for config values used in the paper experiments. Note that we must modify the adjacency matrix to include the main diagonal for the StrCNF to work well. The flow experiments from the paper are reproducible using `experiments/synthetic_multimodal/run_experiment.py`. Hyperparameter values / grids are available in the paper appendix. The CIs are generated using model seeds `[2541 2547 412 411 321 3431 4273 2526]`.
 
 ### Causal Inference with StrAF
