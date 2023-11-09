@@ -6,7 +6,7 @@
 
 ## Introduction
 
-We intrdouce the **Structured Neural Network (StrNN)**, a network architecture that enforces functional independence relationships between inputs and outputs via weight masking.
+We introduce the **Structured Neural Network (StrNN)**, a network architecture that enforces functional independence relationships between inputs and outputs via weight masking.
 
 ## Citation
 
@@ -29,10 +29,12 @@ To use StrNN in your project, clone this repository and run `pip install -e .` f
 
 ## Quick Start
 
-The StrNN provides a drop-in replacement for a fully connected neural network that allows it to respect prescribed functional independencies between input variables.
+The StrNN provides a drop-in replacement for a fully connected neural network, allowing it to respect prescribed functional independencies.
 For example, given an adjacency matrix $A$, we can initialize an StrNN as such:
 
 ```
+import numpy as np
+import torch
 from strnn.models.strNN import StrNN
 
 A = np.array([
@@ -42,7 +44,14 @@ A = np.array([
     [1, 0, 1, 0]
 ])
 
-strnn = StrNN()
+in_dim = A.shape[0]
+out_dim = A.shape[1]
+hid_dim = (50, 50)
+
+strnn = StrNN(in_dim, hid_dim, out_dim, adjacency=A)
+
+x = torch.randn(in_dim)
+y = strnn(x)
 ```
 
 The StrNN can be used for density estimation, for example when integrated into normalizing flows, as we show in the experiments below.
