@@ -105,6 +105,6 @@ z = strcnf(x)
 x_bar = strcnf.invert(z)
 ```
 
-See `experiments/synthetic_multimodal/config/model_config.yaml` for config values used in the paper experiments. Note that we must modify the adjacency matrix to include the main diagonal for the StrCNF to work well. The flow experiments from the paper are reproducible using `experiments/synthetic_multimodal/run_experiment.py`. Hyperparameter values / grids are available in the paper appendix. The CIs are generated using model seeds `[2541 2547 412 411 321 3431 4273 2526]`.
+See `experiments/synthetic_multimodal/config/model_config.yaml` for config values used in the paper experiments. Note that we must modify the adjacency matrix to include the main diagonal for the StrCNF to work well. The flow experiments from the paper are reproducible using `experiments/synthetic_multimodal/run_experiment_mm.py`. Hyperparameter values / grids are available in the paper appendix. The CIs are generated using model seeds `[2541 2547 412 411 321 3431 4273 2526]`.
 
 ### Causal Inference with StrAF
