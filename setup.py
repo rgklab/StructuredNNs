@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="strnn",
-    version="0.2.1",
+    version="0.0.1",
     author="RGKLab",
     description="PyTorch package for Structured Neural Networks.",
     long_description_content_type="text/markdown",
