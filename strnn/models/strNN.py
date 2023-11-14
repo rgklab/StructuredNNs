@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-import pytorch_lightning as pl
 
 from strnn.models.model_utils import NONLINEARITIES
 
@@ -29,21 +28,22 @@ class MaskedLinear(nn.Linear):
         return F.linear(input, self.mask * self.weight, self.bias)
 
 
-class StrNN(pl.LightningModule):
+class StrNN(nn.Module):
     """
     Main neural network class that implements a Structured Neural Network
     Can also become a MADE or Zuko masked NN by specifying the opt_type flag
     """
     def __init__(
-            self,
-            nin: int,
-            hidden_sizes: tuple[int, ...],
-            nout: int,
-            opt_type: str = 'greedy',
-            opt_args: dict = {'var_penalty_weight': 0.0},
-            precomputed_masks: np.ndarray | None = None,
-            adjacency: np.ndarray | None = None,
-            activation: str = 'relu'):
+        self,
+        nin: int,
+        hidden_sizes: tuple[int, ...],
+        nout: int,
+        opt_type: str = 'greedy',
+        opt_args: dict = {'var_penalty_weight': 0.0},
+        precomputed_masks: np.ndarray | None = None,
+        adjacency: np.ndarray | None = None,
+        activation: str = 'relu'
+    ):
         """
         Initializes a Structured Neural Network (StrNN)
         :param nin: input dimension
@@ -56,7 +56,6 @@ class StrNN(pl.LightningModule):
         :param activation: activation function to use in this NN
         """
         super().__init__()
-        self.save_hyperparameters()
 
         # Set parameters
         self.nin = nin
@@ -156,7 +155,9 @@ class StrNN(pl.LightningModule):
         return masks
 
     def factorize_single_mask_greedy(
-            self, adj_mtx: np.ndarray, n_hidden: int
+        self,
+        adj_mtx: np.ndarray,
+        n_hidden: int
     ) -> (np.ndarray, np.ndarray):
         """
         Factorize adj_mtx into M1 * M2
@@ -189,7 +190,8 @@ class StrNN(pl.LightningModule):
         return None, None
 
     def factorize_masks_zuko(
-            self, hidden_sizes: tuple[int]
+        self,
+        hidden_sizes: tuple[int]
     ) -> list[np.ndarray]:
         masks = []
 
