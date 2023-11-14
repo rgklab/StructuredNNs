@@ -14,7 +14,7 @@ setup(
     long_description=long_description,
     url="https://github.com/rgklab/StructuredNNs",
     install_requires=[
-        "torch>=2.0.0",
+        "torch==2.0.1",
         "pytorch-lightning~=2.0",
         "scikit-learn",
         "matplotlib",
