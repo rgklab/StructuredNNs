@@ -24,8 +24,9 @@ Please use the following citation if you use this code or methods in your own wo
 ```
 
 ## Setup
+StrNN can be installed using `pip install strnn`. 
 
-To use StrNN in your project, clone this repository and run `pip install -e .` from the project root to install any required dependencies.
+The flow experiments in the paper can be reproduced using `torch==2.0.1` with cuda version 11.7.
 
 ## Quick Start
 
@@ -89,19 +90,20 @@ af_config = {
     "umnn_int_step": 20,
     "umnn_int_hid_dim": [50, 50],
     "flow_steps": 10,
+    "flow_permute": False,
     "n_param_per_var": 25
 }
 
-straf = AutoregressiveFlowFactory(af_config)
+straf = AutoregressiveFlowFactory(af_config).build_flow()
 
-x = torch.randn(A.shape[0])
-z = straf(x)
+x = torch.randn(1, A.shape[0])
+z, jac = straf(x)
 x_bar = straf.invert(z)
 
 
-cnf_config = {} # See model_config.yaml for values
-strcnf = ContinuousFlowFactory(cnf_config)
-z = strcnf(x)
+cnf_config = {...} # See model_config.yaml for values
+strcnf = ContinuousFlowFactory(cnf_config).build_flow()
+z, jac = strcnf(x)
 x_bar = strcnf.invert(z)
 ```
 
