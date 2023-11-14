@@ -107,6 +107,14 @@ z, jac = strcnf(x)
 x_bar = strcnf.invert(z)
 ```
 
-See `experiments/synthetic_multimodal/config/model_config.yaml` for config values used in the paper experiments. Note that we must modify the adjacency matrix to include the main diagonal for the StrCNF to work well. The flow experiments from the paper are reproducible using `experiments/synthetic_multimodal/run_experiment_mm.py`. Hyperparameter values / grids are available in the paper appendix. The CIs are generated using model seeds `[2541 2547 412 411 321 3431 4273 2526]`.
+See `experiments/synthetic_multimodal/config/model_config.yaml` for config values used in the paper experiments. 
+
+The flow experiments from the paper are reproducible using `experiments/synthetic_multimodal/run_experiment_mm.py`. After performing a editable install of this repository, we can run:
+
+```
+python run_experiment_mm.py --dataset_name multimodal --model_config straf_best --wandb_name strnn --model_seed 2541  --lr 1e-3 --scheduler plateau
+```
+
+Hyperparameter values / grids are available in the paper appendix. Note that we must modify the adjacency matrix to include the main diagonal for the StrCNF to work well. The CIs are generated using model seeds: `[2541 2547 412 411 321 3431 4273 2526]`.
 
 ### Causal Inference with StrAF
