@@ -24,9 +24,9 @@ Please use the following citation if you use this code or methods in your own wo
 ```
 
 ## Setup
-StrNN can be installed using `pip install strnn`. 
+The StrNN can be installed using `pip install strnn`. 
 
-The flow experiments in the paper can be reproduced using `torch==2.0.1` with cuda version 11.7.
+If you are interested in reproducing our flow experiments, we instead recommend using an editable install. To do so, clone this repository and then run `pip install -e .` The flow experiments in the paper can be reproduced using `torch==2.0.1` with cuda version 11.7.
 
 ## Quick Start
 
