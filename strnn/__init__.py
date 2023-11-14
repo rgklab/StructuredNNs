@@ -1,4 +1,4 @@
-from strnn.models.strNN import StrNN
-from strnn.models.strNN import MaskedLinear
+from .models.strNN import StrNN
+from .models.strNN import MaskedLinear
 
 __all__ = ["StrNN", "MaskedLinear"]

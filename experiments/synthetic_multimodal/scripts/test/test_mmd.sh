@@ -1,2 +1,0 @@
-cd ..
-python run_experiment.py --dataset_name multimodal --model_config ffjord_baseline --wandb_name strnn_mm --mmd_samples 512
