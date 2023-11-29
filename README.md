@@ -1,8 +1,9 @@
 # Structured Neural Networks
 
 **Official implementation of the NeurIPS 2023 paper [Structured Neural Networks for Density Estimation and Causal Inference](https://arxiv.org/abs/2311.02221).**
-
-![main_figure](media/main_figure.gif)
+<p align="center">
+<img src="media/main_figure.gif" width="60%"/>
+</p>
 
 ## Introduction
 
