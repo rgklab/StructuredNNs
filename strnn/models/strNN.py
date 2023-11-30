@@ -66,6 +66,8 @@ def ian_uniform(
 
     return weights, bias
 
+def ian_normal() -> tuple[torch.Tensor, torch.Tensor]:
+    pass
 
 class MaskedLinear(nn.Linear):
     """
