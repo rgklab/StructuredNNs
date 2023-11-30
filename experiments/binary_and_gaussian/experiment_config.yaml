@@ -1,0 +1,33 @@
+binary_every_other_d15_n2000_StrNN_best: &binary_every_other_d15_n2000_StrNN_best
+  activation: "relu"
+  epsilon: 0.01
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 12
+  hidden_size_multiplier_3: 12
+  hidden_size_multiplier_4: 8
+  hidden_size_multiplier_5: 12
+  num_hidden_layers: 1
+  learning_rate: 0.001
+  weight_decay: 0.05
+  opt_type: "greedy"
+  optimize_masks: 1
+  optimizer: "adamw"
+
+binary_every_other_d15_n2000_MADE_best: &binary_every_other_d15_n2000_MADE_best
+  activation: "relu"
+  epsilon: 0.000001
+  hidden_size_multiplier_1: 8
+  hidden_size_multiplier_2: 1
+  hidden_size_multiplier_3: 12
+  hidden_size_multiplier_4: 1
+  hidden_size_multiplier_5: 1
+  num_hidden_layers: 1
+  learning_rate: 0.001
+  weight_decay: 0.05
+  opt_type: "greedy"
+  optimize_masks: 0
+  optimizer: "adamw"
+
+#binary_random_sparse_d15_n2000_StrNN_best: &binary_random_sparse_d15_n2000_StrNN_best
+
+#binary_random_sparse_d15_n2000_MADE_best: &binary_random_sparse_d15_n2000_MADE_best
