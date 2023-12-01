@@ -1,4 +1,6 @@
 binary_every_other_d15_n2000_StrNN_best: &binary_every_other_d15_n2000_StrNN_best
+  dataset_name: "binary_every_other_d15_n2000"
+  adj_mtx_name: "every_other_d15_adj"
   activation: "relu"
   epsilon: 0.01
   hidden_size_multiplier_1: 4
@@ -9,11 +11,15 @@ binary_every_other_d15_n2000_StrNN_best: &binary_every_other_d15_n2000_StrNN_bes
   num_hidden_layers: 1
   learning_rate: 0.001
   weight_decay: 0.05
+  patience: 10
+  max_epochs: 5000
+  batch_size: 200
   opt_type: "greedy"
-  optimize_masks: 1
   optimizer: "adamw"
 
 binary_every_other_d15_n2000_MADE_best: &binary_every_other_d15_n2000_MADE_best
+  dataset_name: "binary_every_other_d15_n2000"
+  adj_mtx_name: None
   activation: "relu"
   epsilon: 0.000001
   hidden_size_multiplier_1: 8
@@ -24,10 +30,46 @@ binary_every_other_d15_n2000_MADE_best: &binary_every_other_d15_n2000_MADE_best
   num_hidden_layers: 1
   learning_rate: 0.001
   weight_decay: 0.05
-  opt_type: "greedy"
-  optimize_masks: 0
+  patience: 10
+  max_epochs: 5000
+  batch_size: 200
+  opt_type: "MADE"
   optimizer: "adamw"
 
-#binary_random_sparse_d15_n2000_StrNN_best: &binary_random_sparse_d15_n2000_StrNN_best
+binary_random_sparse_d15_n2000_StrNN_best: &binary_random_sparse_d15_n2000_StrNN_best
+  dataset_name: "binary_random_sparse_d15_n2000"
+  adj_mtx_name: "random_sparse_d15_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 1
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 5000
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
 
-#binary_random_sparse_d15_n2000_MADE_best: &binary_random_sparse_d15_n2000_MADE_best
+binary_random_sparse_d15_n2000_MADE_best: &binary_random_sparse_d15_n2000_MADE_best
+  dataset_name: "binary_random_sparse_d15_n2000"
+  adj_mtx_name: None
+  activation: "relu"
+  epsilon: 0.01
+  hidden_size_multiplier_1: 12
+  hidden_size_multiplier_2: 4
+  hidden_size_multiplier_3: 8
+  hidden_size_multiplier_4: 1
+  hidden_size_multiplier_5: 1
+  num_hidden_layers: 1
+  learning_rate: 0.005
+  weight_decay: 0.01
+  patience: 10
+  max_epochs: 5000
+  batch_size: 200
+  opt_type: "MADE"
+  optimizer: "adamw"

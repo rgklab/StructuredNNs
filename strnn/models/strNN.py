@@ -147,7 +147,12 @@ class StrNN(nn.Module):
         self.opt_type = opt_type
         self.opt_args = opt_args
         self.precomputed_masks = precomputed_masks
-        self.A = adjacency
+        if adjacency is not None:
+            self.A = adjacency
+        else:
+            assert self.opt_type == 'MADE'
+            # Initialize adjacency structure to fully autoregressive
+            self.A = np.tril(np.ones((nout, nin)), -1)
         self.ian_init = ian_init
 
         # Define activation
@@ -221,13 +226,13 @@ class StrNN(nn.Module):
         if self.opt_type == 'Zuko':
             # Zuko creates all masks at once
             masks = self.factorize_masks_zuko(self.hidden_sizes)
+        elif self.opt_type == 'MADE':
+            masks = self.factorize_masks_MADE()
         else:
             # All per-layer factorization algos
             for l in self.hidden_sizes:
                 if self.opt_type == 'greedy':
                     (M1, M2) = self.factorize_single_mask_greedy(adj_mtx, l)
-                elif self.opt_type == 'MADE':
-                    (M1, M2) = self.factorize_single_mask_MADE(adj_mtx, l)
                 else:
                     raise ValueError(f'{self.opt_type} is NOT an implemented optimization type!')
 
@@ -270,8 +275,23 @@ class StrNN(nn.Module):
 
         return M1, M2
 
-    def factorize_single_mask_MADE(self, adj_mtx: np.ndarray, n_hidden: int):
-        return None, None
+    def factorize_masks_MADE(self) -> list[np.ndarray]:
+        """
+        Non-random version of the MADE factorization algorithm
+        """
+        self.m = {}
+        L = len(self.hidden_sizes)
+
+        # sample the order of the inputs and the connectivity of all neurons
+        self.m[-1] = np.arange(self.nin)
+        for l in range(L):
+            self.m[l] = np.array([self.nin - 1 - (i % self.nin) for i in range(self.hidden_sizes[l])])
+
+        # construct the mask matrices
+        masks = [self.m[l - 1][:, None] <= self.m[l][None, :] for l in range(L)]
+        masks.append(self.m[L - 1][:, None] < self.m[-1][None, :])
+
+        return masks
 
     def factorize_masks_zuko(
         self,

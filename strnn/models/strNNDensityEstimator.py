@@ -2,10 +2,9 @@
 # StrNN network no longer handles Gaussian case automatically
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from strNN import StrNN
+from strnn.models.strNN import StrNN
 from numpy.random import binomial
 
 
@@ -45,40 +44,12 @@ class StrNNDensityEstimator(StrNN):
 
         return ll, z
 
-    # def training_step(self, batch, batch_idx):
-    #     x_hat, loss = self._get_preds_loss(batch)
-    #
-    #     self.log("train_loss", loss)
-    #     return loss
-    #
-    # def validation_step(self, batch, batch_idx):
-    #     _, loss = self._get_preds_loss(batch)
-    #
-    #     self.log("validation_loss", loss)
-    #
-    # def test_step(self, batch, batch_idx):
-    #     x = batch
-    #     x_hat, loss = self._get_preds_loss(x)
-    #
-    #     # Report standard error along with cross entropy loss
-    #     if self.is_binary:
-    #         sig_x_hat = torch.clamp(torch.sigmoid(x_hat), 1e-6, 1-1e-6)
-    #         vec_loss = - (x * torch.log(sig_x_hat) +
-    #                       (1 - x) * torch.log(1 - sig_x_hat))
-    #         sample_lls = torch.sum(vec_loss, dim=1)
-    #     else:
-    #         sample_lls = - self.compute_LL(x, x_hat)[0]
-    #
-    #     batch_size = len(x)
-    #     std_error = torch.std(sample_lls) / np.sqrt(batch_size)
-    #     self.log("test_loss", loss)
-    #     self.log("test_std_error", std_error)
-    #
     def get_preds_loss(self, batch):
         x = batch
         x_hat = self(x)
+        assert self.data_type in SUPPORTED_DATA_TYPES
 
-        if self.is_binary:
+        if self.data_type == 'binary':
             # Evaluate the binary cross entropy loss
             loss = F.binary_cross_entropy_with_logits(
                 x_hat, x, reduction='sum'

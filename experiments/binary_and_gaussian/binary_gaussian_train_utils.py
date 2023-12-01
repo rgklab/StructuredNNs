@@ -6,21 +6,49 @@ from strnn.models.strNN import StrNN
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+def load_data_and_adj_mtx(dataset_name, adj_mtx_name):
+    """
+    Load train and val splits of specified data and
+    associated adjacency matrix
+    """
+    # Load adjacency matrix
+    if adj_mtx_name != "None":
+        adj_mtx_path = f"./synth_data_files/{adj_mtx_name}.npz"
+        adj_mtx = np.load(adj_mtx_path)
+        adj_mtx = adj_mtx[adj_mtx.files[0]]
+    else:
+        adj_mtx = None
+
+    # Load data
+    data_path = f"./synth_data_files/{dataset_name}.npz"
+    data = np.load(data_path)
+    train_data = data['train_data'].astype(np.float32)
+    val_data = data['valid_data'].astype(np.float32)
+    train_data = torch.from_numpy(train_data).to(device)
+    val_data = torch.from_numpy(val_data).to(device)
+
+    return train_data, val_data, adj_mtx
+
+
 def train_loop(
     model: StrNN,
     optimizer: Optimizer,
     train_dl: DataLoader,
     val_dl: DataLoader,
-    train_args: dict
+    max_epoch: int,
+    patience: int
 ) -> dict | None:
     """
     @param model
     @param optimizer
     @param train_dl: training data loader
     @param val_dl: validation data loader
-    @param train_args: dictionary containing other training parameters:
-        max_epoch: maximum epoch allowed for training
-        patience: max number of epochs without validation loss
+    @param max_epoch: maximum epoch allowed for training
+    @param patience: max number of epochs without validation loss
             improvement before terminating
     @return: dict of best model state
     """
@@ -28,7 +56,7 @@ def train_loop(
     best_val = None
     counter = 0
 
-    for epoch in range(1, train_args["max_epoch"]):
+    for epoch in range(1, max_epoch):
         train_losses = []
         val_losses = []
 
@@ -69,7 +97,7 @@ def train_loop(
                 counter = 0 # Reset counter since we beat best loss so far
             else:
                 counter += 1
-                if counter > train_args['patience']:
+                if counter > patience:
                     return best_model_state
 
     return best_model_state
