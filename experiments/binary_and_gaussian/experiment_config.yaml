@@ -73,3 +73,41 @@ binary_random_sparse_d15_n2000_MADE_best: &binary_random_sparse_d15_n2000_MADE_b
   batch_size: 200
   opt_type: "MADE"
   optimizer: "adamw"
+
+gaussian_prev_2_d20_n5000_StrNN_best: &gaussian_prev_2_d20_n5000_StrNN_best
+  dataset_name: "gaussian_prev_2_d20_n5000"
+  adj_mtx_name: "prev_2_d20_adj"
+  activation: "relu"
+  epsilon: 0.001
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 9
+  hidden_size_multiplier_3: 3
+  hidden_size_multiplier_4: 7
+  hidden_size_multiplier_5: 7
+  num_hidden_layers: 1
+  learning_rate: 0.001
+  weight_decay: 0.005
+  patience: 10
+  max_epochs: 5000
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+gaussian_prev_2_d20_n5000_MADE_best: &gaussian_prev_2_d20_n5000_MADE_best
+  dataset_name: "gaussian_prev_2_d20_n5000"
+  adj_mtx_name: None
+  activation: "relu"
+  epsilon: 0.1
+  hidden_size_multiplier_1: 7
+  hidden_size_multiplier_2: 5
+  hidden_size_multiplier_3: 3
+  hidden_size_multiplier_4: 8
+  hidden_size_multiplier_5: 9
+  num_hidden_layers: 1
+  learning_rate: 0.001
+  weight_decay: 0.01
+  patience: 10
+  max_epochs: 5000
+  batch_size: 200
+  opt_type: "MADE"
+  optimizer: "adamw"
