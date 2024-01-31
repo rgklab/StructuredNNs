@@ -1,4 +1,5 @@
 import os
+
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 import torch
 import torch.nn as nn
@@ -26,6 +27,7 @@ def ian_uniform(
     :param mask: weight mask for this layer
     :param
     """
+    # Question: why init even matters in first place?
     if torch.overrides.has_torch_function_variadic(weights):
         return torch.overrides.handle_torch_function(
             ian_uniform,
@@ -41,6 +43,7 @@ def ian_uniform(
     # Compute fan_in based on mask
     fan_ins = mask.sum(dim=1)
 
+    # Try multiplying with number
     # Compute other quantities as in Kaiming uniform
     gain = torch.nn.init.calculate_gain(nonlinearity, a)
 
@@ -67,10 +70,51 @@ def ian_uniform(
     return weights, bias
 
 
+def vectorized_ian_uniform(weights: torch.Tensor,
+                           bias: torch.Tensor,
+                           mask: torch.Tensor,
+                           a: float = 0,
+                           nonlinearity: str = 'leaky_relu'
+                           ) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Fills the input weights with values based on Kaiming uniform initialization
+    (https://pytorch.org/docs/stable/_modules/torch/nn/init.html#kaiming_uniform_)
+    but takes into account the number of fan_ins that are masked in StrNN
+
+    :param tensor: weight tensor to be filled
+    :param mask: weight mask for this layer
+    :param
+    """
+    # Ensuring non-zero fan-in
+    fan_ins = mask.sum(dim=1).clamp(min=1)
+
+    # Note a parameter is only necessary for leaky_relu non-linearity
+    gain = torch.nn.init.calculate_gain(nonlinearity, a)
+
+    # Compute standard deviation for weights
+    std = gain / torch.sqrt(fan_ins)
+
+    # Compute bounds for uniform distribution
+    bounds = std * math.sqrt(3.0)
+
+    # Apply uniform initialization row-wise to handle varying bounds
+    with torch.no_grad():
+        for i, bound in enumerate(bounds):
+            weights[i].uniform_(-bound.item(), bound.item())
+
+    # Simplified bias initialization
+    with torch.no_grad():
+        bias.uniform_(-0.01, 0.01)
+
+    return weights, bias
+
+
 class MaskedLinear(nn.Linear):
     """
     A linear neural network layer, except with a configurable
     binary mask on the weights
+
+    It also has binary mask multiplied element wise to the weights
     """
     mask: torch.Tensor
 
@@ -93,7 +137,12 @@ class MaskedLinear(nn.Linear):
         same as initializing with uniform(-1/sqrt(in_features), 1/sqrt(in_features)).
         For details, see https://github.com/pytorch/pytorch/issues/57109
         """
-        ian_uniform(
+        # ian_uniform(
+        #     self.weight, self.bias, self.mask,
+        #     a=math.sqrt(5), nonlinearity=self.activation
+        # )
+
+        vectorized_ian_uniform(
             self.weight, self.bias, self.mask,
             a=math.sqrt(5), nonlinearity=self.activation
         )
@@ -102,7 +151,7 @@ class MaskedLinear(nn.Linear):
         self.mask.data.copy_(torch.from_numpy(mask.astype(np.uint8).T))
         if self.ian_init:
             # Reinitialize weights based on masks
-            self.reset_parameters_w_masking()
+            self.reset_parameters_w_masking()  # when we set mask we can also reset all the weights
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         # * is element-wise multiplication in numpy
@@ -114,17 +163,18 @@ class StrNN(nn.Module):
     Main neural network class that implements a Structured Neural Network
     Can also become a MADE or Zuko masked NN by specifying the opt_type flag
     """
+
     def __init__(
-        self,
-        nin: int,
-        hidden_sizes: tuple[int, ...],
-        nout: int,
-        opt_type: str = 'greedy',
-        opt_args: dict = {'var_penalty_weight': 0.0},
-        precomputed_masks: np.ndarray | None = None,
-        adjacency: np.ndarray | None = None,
-        activation: str = 'relu',
-        ian_init: bool = False
+            self,
+            nin: int,
+            hidden_sizes: tuple[int, ...],
+            nout: int,
+            opt_type: str = 'greedy',  # algorithm 1
+            opt_args: dict = {'var_penalty_weight': 0.0},
+            precomputed_masks: np.ndarray | None = None,
+            adjacency: np.ndarray | None = None,
+            activation: str = 'relu',
+            ian_init: bool = False
     ):
         """
         Initializes a Structured Neural Network (StrNN)
@@ -244,9 +294,9 @@ class StrNN(nn.Module):
         return masks
 
     def factorize_single_mask_greedy(
-        self,
-        adj_mtx: np.ndarray,
-        n_hidden: int
+            self,
+            adj_mtx: np.ndarray,
+            n_hidden: int
     ) -> (np.ndarray, np.ndarray):
         """
         Factorize adj_mtx into M1 * M2
@@ -294,8 +344,8 @@ class StrNN(nn.Module):
         return masks
 
     def factorize_masks_zuko(
-        self,
-        hidden_sizes: tuple[int]
+            self,
+            hidden_sizes: tuple[int]
     ) -> list[np.ndarray]:
         masks = []
 
@@ -368,9 +418,11 @@ if __name__ == '__main__':
             activation='relu',
             ian_init=True
         )
-        import pdb; pdb.set_trace()
+
+    #     import pdb; pdb.set_trace()
     except:
         import sys, pdb, traceback
+
         extype, value, tb = sys.exc_info()
         traceback.print_exc()
         pdb.post_mortem(tb)
