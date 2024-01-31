@@ -27,7 +27,6 @@ def ian_uniform(
     :param mask: weight mask for this layer
     :param
     """
-    # Question: why init even matters in first place?
     if torch.overrides.has_torch_function_variadic(weights):
         return torch.overrides.handle_torch_function(
             ian_uniform,
@@ -151,7 +150,7 @@ class MaskedLinear(nn.Linear):
         self.mask.data.copy_(torch.from_numpy(mask.astype(np.uint8).T))
         if self.ian_init:
             # Reinitialize weights based on masks
-            self.reset_parameters_w_masking()  # when we set mask we can also reset all the weights
+            self.reset_parameters_w_masking()
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         # * is element-wise multiplication in numpy
