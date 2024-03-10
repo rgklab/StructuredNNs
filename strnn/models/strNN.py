@@ -1,5 +1,3 @@
-import os
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -126,17 +124,18 @@ class StrNN(nn.Module):
         activation: str = 'relu',
         ian_init: bool = False
     ):
-        """
-        Initializes a Structured Neural Network (StrNN)
-        :param nin: input dimension
-        :param hidden_sizes: list of hidden layer sizes
-        :param nout: output dimension
-        :param opt_type: optimization type: greedy, zuko, MADE
-        :param opt_args: additional optimization algorithm params
-        :param precomputed_masks: previously stored masks, use directly
-        :param adjacency: the adjacency matrix, nout by nin
-        :param activation: activation function to use in this NN
-        :param ian_init: weight initialization takes the masks into account
+        """Initialize a Structured Neural Network (StrNN).
+
+        Args:
+            nin: input dimension
+            hidden_sizes: list of hidden layer sizes
+            nout: output dimension
+            opt_type: optimization type: greedy, zuko, MADE
+            opt_args: additional optimization algorithm params
+            precomputed_masks: previously stored masks, use directly
+            adjacency: the adjacency matrix, nout by nin
+            activation: activation function to use in this NN
+            ian_init: weight initialization takes the masks into account
         """
         super().__init__()
 
@@ -147,12 +146,14 @@ class StrNN(nn.Module):
         self.opt_type = opt_type
         self.opt_args = opt_args
         self.precomputed_masks = precomputed_masks
+
         if adjacency is not None:
             self.A = adjacency
         else:
             assert self.opt_type == 'MADE'
             # Initialize adjacency structure to fully autoregressive
             self.A = np.tril(np.ones((nout, nin)), -1)
+
         self.ian_init = ian_init
 
         # Define activation
@@ -230,15 +231,17 @@ class StrNN(nn.Module):
             masks = self.factorize_masks_MADE()
         else:
             # All per-layer factorization algos
-            for l in self.hidden_sizes:
+            for lyr in self.hidden_sizes:
                 if self.opt_type == 'greedy':
-                    (M1, M2) = self.factorize_single_mask_greedy(adj_mtx, l)
+                    (M1, M2) = self.factorize_single_mask_greedy(adj_mtx, lyr)
                 else:
-                    raise ValueError(f'{self.opt_type} is NOT an implemented optimization type!')
+                    err_msg = "{} is NOT an implemented optimization type!"
+                    raise ValueError(err_msg.format(self.opt_type))
 
                 # Update the adjacency structure for recursive call
                 adj_mtx = M1
-                masks = masks + [M2.T]  # take transpose for size: (n_inputs x n_hidden/n_output)
+                # Take transpose for size: (n_inputs x n_hidden/n_output)
+                masks = masks + [M2.T]
             masks = masks + [M1.T]
 
         return masks
@@ -247,14 +250,17 @@ class StrNN(nn.Module):
         self,
         adj_mtx: np.ndarray,
         n_hidden: int
-    ) -> (np.ndarray, np.ndarray):
-        """
-        Factorize adj_mtx into M1 * M2
-        :param adj_mtx: adjacency structure, n_outputs x n_inputs
-        :param n_hidden: number of units in this hidden layer
-        :return: masks:
-            M1 size: (n_outputs x n_hidden)
-            M2 size: (n_hidden x n_inputs)
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Factorize adj_mtx into M1 * M2.
+
+        Args:
+            adj_mtx: adjacency structure, n_outputs x n_inputs
+            n_hidden: number of units in this hidden layer
+
+        Returns:
+            Masks (M1, M2) with the shapes:
+                M1 size: (n_outputs x n_hidden)
+                M2 size: (n_hidden x n_inputs)
         """
         # find non-zero rows and define M2
         A_nonzero = adj_mtx[~np.all(adj_mtx == 0, axis=1), :]
@@ -276,20 +282,24 @@ class StrNN(nn.Module):
         return M1, M2
 
     def factorize_masks_MADE(self) -> list[np.ndarray]:
-        """
-        Non-random version of the MADE factorization algorithm
+        """Factorize adjacency matrix according to MADE algorithm.
+
+        Non-random version of the MADE factorization algorithm is used.
+
+        Returns:
+            List of all weight masks.
         """
         self.m = {}
-        L = len(self.hidden_sizes)
+        n_layers = len(self.hidden_sizes)
 
         # sample the order of the inputs and the connectivity of all neurons
         self.m[-1] = np.arange(self.nin)
-        for l in range(L):
-            self.m[l] = np.array([self.nin - 1 - (i % self.nin) for i in range(self.hidden_sizes[l])])
+        for layer in range(n_layers):
+            self.m[layer] = np.array([self.nin - 1 - (i % self.nin) for i in range(self.hidden_sizes[layer])])
 
         # construct the mask matrices
-        masks = [self.m[l - 1][:, None] <= self.m[l][None, :] for l in range(L)]
-        masks.append(self.m[L - 1][:, None] < self.m[-1][None, :])
+        masks = [self.m[l - 1][:, None] <= self.m[l][None, :] for l in range(n_layers)]
+        masks.append(self.m[n_layers - 1][:, None] < self.m[-1][None, :])
 
         return masks
 
@@ -330,12 +340,14 @@ class StrNN(nn.Module):
         return masks
 
     def check_masks(self) -> bool:
-        """
-        Given the model's masks, [M1, M2, ..., Mk],
-        check if the matrix product
+        """Check whether weight masks respect prescribed adjacency matrix.
+
+        Given the model's masks, [M1, M2, ..., Mk], check if the matrix product
         (M1 * M2 * ... * Mk).T = Mk.T * ... * M2.T * M1.T
         respects A's adjacency structure.
-        :return: True or False
+
+        Returns:
+            True or False depending on validity of weight masks.
         """
         mask_prod = self.masks[0]
         for i in range(1, len(self.masks)):
@@ -343,34 +355,5 @@ class StrNN(nn.Module):
         mask_prod = mask_prod.T
 
         constraint = (mask_prod > 0.0001) * 1. - self.A
-        if np.any(constraint != 0.):
-            return False
-        else:
-            return True
 
-
-if __name__ == '__main__':
-    # TODO: Write unit tests
-    # Test StrNN model
-    try:
-        d = 3
-        A = np.ones((d, d))
-        A = np.tril(A, -1)
-
-        model = StrNN(
-            nin=d,
-            hidden_sizes=(d * 2,),
-            nout=d,
-            opt_type='greedy',
-            opt_args={'var_penalty_weight': 0.0},
-            precomputed_masks=None,
-            adjacency=A,
-            activation='relu',
-            ian_init=True
-        )
-        import pdb; pdb.set_trace()
-    except:
-        import sys, pdb, traceback
-        extype, value, tb = sys.exc_info()
-        traceback.print_exc()
-        pdb.post_mortem(tb)
+        return not np.any(constraint != 0.)
