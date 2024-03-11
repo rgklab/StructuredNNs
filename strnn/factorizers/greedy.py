@@ -5,7 +5,7 @@ from .factorizer import AdjacencyFactorizer
 
 class GreedyFactorizer(AdjacencyFactorizer):
 
-    def __init__(self, adjacency: np.array, opt_args: dict | None = None):
+    def __init__(self, adjacency: np.ndarray, opt_args: dict | None = None):
         """Initialize a greedy algorithm mask factorizer.
 
         Args:
@@ -15,7 +15,7 @@ class GreedyFactorizer(AdjacencyFactorizer):
         self.adjacency = adjacency
         self.opt_args = opt_args
 
-    def factorize(self, hidden_sizes: tuple[int]) -> list[np.array]:
+    def factorize(self, hidden_sizes: tuple[int, ...]) -> list[np.ndarray]:
         """Factorize adjacency matrix into mask matrices.
 
         Factorize the given adjacency structure into per-layer masks.
@@ -28,7 +28,7 @@ class GreedyFactorizer(AdjacencyFactorizer):
             List of masks in order for layers from inputs to outputs. This
             order matches how the masks are assigned to the networks in MADE.
         """
-        masks = []
+        masks: list[np.ndarray] = []
         adj_mtx = np.copy(self.adjacency)
 
         for layer in hidden_sizes:

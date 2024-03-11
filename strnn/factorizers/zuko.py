@@ -3,7 +3,7 @@ import torch
 
 
 class ZukoFactorizer:
-    def __init__(self, adjacency: np.array, opt_args: dict | None = None):
+    def __init__(self, adjacency: np.ndarray, opt_args: dict | None = None):
         """Initialize Zuko Factorizer.
 
         Args:
@@ -13,7 +13,7 @@ class ZukoFactorizer:
         self.adjacency = adjacency
         self.opt_args = opt_args
 
-    def factorize(self, hidden_sizes: tuple[int]) -> list[np.array]:
+    def factorize(self, hidden_sizes: tuple[int, ...]) -> list[np.ndarray]:
         """Factorize adjacency matrix according to Zuko algorithm.
 
         Implementation adapted from: https://github.com/probabilists/zuko.
@@ -32,6 +32,8 @@ class ZukoFactorizer:
         A_prime, inv = torch.unique(adj_mtx, dim=0, return_inverse=True)
         n_deps = A_prime.sum(dim=-1)
         P = (A_prime @ A_prime.T == n_deps).double()
+
+        indices = None
 
         for i, h_i in enumerate((*hidden_sizes, n_outputs)):
             if i > 0:

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 
-def check_masks(masks: list[np.array], adjacency: np.array) -> bool:
+def check_masks(masks: list[np.ndarray], adjacency: np.ndarray) -> bool:
     """Check whether weight masks respect prescribed adjacency matrix.
 
     Given a set of masks, [M1, M2, ..., Mk], check if the matrix product
@@ -30,12 +30,12 @@ def check_masks(masks: list[np.array], adjacency: np.array) -> bool:
 class AdjacencyFactorizer(ABC):
 
     @abstractmethod
-    def __init__(self, adjacency: np.array, opt_args: dict | None = None):
+    def __init__(self, adjacency: np.ndarray, opt_args: dict | None = None):
         pass
 
     @abstractmethod
     def factorize(
         self,
         hidden_sizes: tuple[int, ...]
-    ) -> list[np.array]:
+    ) -> list[np.ndarray]:
         pass

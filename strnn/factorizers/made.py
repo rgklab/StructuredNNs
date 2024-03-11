@@ -5,7 +5,7 @@ from .factorizer import AdjacencyFactorizer
 
 class MADEFactorizer(AdjacencyFactorizer):
 
-    def __init__(self, adjacency: np.array, opt_args: dict | None = None):
+    def __init__(self, adjacency: np.ndarray, opt_args: dict | None = None):
         """Initialize MADE factorizer.
 
         Factorizer and only be applied on fully autoregressive adjacencies.
@@ -20,7 +20,7 @@ class MADEFactorizer(AdjacencyFactorizer):
         self.adjacency = adjacency
         self.opt_args = opt_args
 
-    def factorize(self, hidden_sizes: tuple[int]) -> list[np.array]:
+    def factorize(self, hidden_sizes: tuple[int, ...]) -> list[np.ndarray]:
         """Factorize adjacency matrix according to MADE algorithm.
 
         Non-random version of the MADE factorization algorithm is used.
