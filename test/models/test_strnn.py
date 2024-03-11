@@ -95,6 +95,23 @@ def test_strnn_empty_adjacency_made():
     assert np.all(strnn.A == np.tril(np.ones((4, 4)), -1))
 
 
+def test_strnn_precomputed_erroneous():
+    """Test that StrNN rejects precomputed masks that are incorrect."""
+    incorrect_masks = [
+        np.ones_like(strnn_adjacency),
+        np.ones_like(strnn_adjacency)
+    ]
+
+    with pytest.raises(AssertionError):
+        StrNN(
+            nin=4,
+            hidden_sizes=[4, 4],
+            nout=4,
+            adjacency=strnn_adjacency,
+            precomputed_masks=incorrect_masks
+        )
+
+
 def test_strnn_update_masks():
     """Test that update masks correctly interfaces with MaskedLinear"""
     strnn = StrNN(4, [4, 4], 4, adjacency=strnn_adjacency)
@@ -116,11 +133,14 @@ def test_strnn_update_masks_mismatch_output():
 
 def test_strnn_update_masks_multiple():
     """Test that update masks can use n_out that is a multiple of adj shape."""
-    strnn = StrNN(4, [4, 4], 8, adjacency=strnn_adjacency)
+    strnn = StrNN(4, [5, 5], 8, adjacency=strnn_adjacency)
 
     strnn.update_masks()
 
-    assert strnn.masks[-1].shape == (4, 8)
+    tiled_mask = np.concatenate([greedy_mask_2] * 2, axis=1)
+
+    assert np.all(strnn.masks[-1] == tiled_mask)
+    assert np.all(strnn.net[-1].mask.numpy().T == tiled_mask)
 
 
 def test_strnn_factorization_greedy():

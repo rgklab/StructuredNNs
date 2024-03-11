@@ -107,7 +107,7 @@ class StrNN(nn.Module):
             if self.opt_type == "made":
                 # Initialize adjacency structure to fully autoregressive
                 warnings.warn(("Adjacency matrix is unspecified, defaulting to"
-                               "fully autoregressive."))
+                               " fully autoregressive structure."))
                 self.A = np.tril(np.ones((nout, nin)), -1)
             else:
                 raise ValueError(("Adjacency matrix must be specified if"
@@ -153,6 +153,6 @@ class StrNN(nn.Module):
             masks[-1] = np.concatenate([masks[-1]] * k, axis=1)
 
         # Set the masks in all MaskedLinear layers
-        layers = [l for l in self.net.modules() if isinstance(l, MaskedLinear)]
+        layers = [m for m in self.net.modules() if isinstance(m, MaskedLinear)]
         for layer, mask in zip(layers, self.masks):
             layer.set_mask(mask)
