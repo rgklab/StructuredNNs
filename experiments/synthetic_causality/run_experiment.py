@@ -1,5 +1,4 @@
 import argparse
-import sys
 
 import numpy as np
 import yaml
@@ -11,7 +10,7 @@ from data.causal_sem import SparseSEM
 
 from utils import dict2namespace
 from strnn.models.config_constants import *
-from strnn.models.causal_arflow import CausalARFlow
+from strnn.models.causal_arflow import CausalARFlowTrainer
 
 BL_CONFIG_PATH = "./config/baseline.yaml"
 FM_CONFIG_PATH = "./config/masked.yaml"
@@ -38,7 +37,7 @@ print(args, flush=True)
 
 
 def get_model_config(args: argparse.Namespace, config: dict) -> dict:
-    """Updates model arch config with command line arguments.
+    """Update model arch config with command line arguments.
 
     Args:
         args: Command line arguments.
@@ -59,7 +58,6 @@ def get_model_config(args: argparse.Namespace, config: dict) -> dict:
 
 
 def main():
-
     np.random.seed(args.graph_seed)
     torch.manual_seed(2541)
 
@@ -109,8 +107,8 @@ def main():
         bl_config.arch_config[ADJ] = None
         fm_config.arch_config[ADJ] = bin_adj_mat
 
-        carefl = CausalARFlow(bl_config)
-        straf = CausalARFlow(fm_config)
+        carefl = CausalARFlowTrainer(bl_config)
+        straf = CausalARFlowTrainer(fm_config)
 
         # Train models
         carefl.fit_to_sem(dataset)
@@ -133,8 +131,8 @@ def main():
         overall_bl_error.append(bl_err)
         overall_fm_error.append(fm_err)
 
-    print(np.nanmean(overall_bl_error), np.nanstd(overall_bl_error), flush=True)
-    print(np.nanmean(overall_fm_error), np.nanstd(overall_fm_error), flush=True)
+    print(np.nanmean(overall_bl_error), np.nanstd(overall_bl_error))
+    print(np.nanmean(overall_fm_error), np.nanstd(overall_fm_error))
 
     exp_output = {
         "args": args,
@@ -146,8 +144,13 @@ def main():
     output_dir = "./output/"
     out_fn = "linadd{}_{}hid_{}obs_{}runs_{}"
 
-    out_fn = out_fn.format(args.n_graph_vars, args.hidden_width, args.data_samples,
-                        args.n_trials, args.eval)
+    out_fn = out_fn.format(
+        args.n_graph_vars,
+        args.hidden_width,
+        args.data_samples,
+        args.n_trials,
+        args.eval
+    )
 
     torch.save(exp_output, output_dir + out_fn + ".pt")
 
