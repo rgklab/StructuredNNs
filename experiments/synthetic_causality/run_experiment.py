@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 import numpy as np
 import yaml
@@ -58,6 +59,7 @@ def get_model_config(args: argparse.Namespace, config: dict) -> dict:
 
 
 def main():
+    """Generate SEM dataset and evaluate both CAREFL and Causal StrAF."""
     np.random.seed(args.graph_seed)
     torch.manual_seed(2541)
 
@@ -141,7 +143,8 @@ def main():
         "sem": sem
     }
 
-    output_dir = "./output/"
+    output_dir = Path("./output/")
+    output_dir.mkdir(parents=False, exist_ok=True)
     out_fn = "linadd{}_{}hid_{}obs_{}runs_{}"
 
     out_fn = out_fn.format(
