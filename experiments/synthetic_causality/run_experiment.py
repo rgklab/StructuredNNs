@@ -115,10 +115,10 @@ def main():
         straf.fit_to_sem(dataset)
 
         # Evaluate
-        bl_true, bl_pred, _ = evaluate_intervention(sem, carefl, dataset,
+        bl_true, bl_pred, _ = evaluate_intervention(sem, carefl.flow, dataset,
                                                     args.n_eval_points,
                                                     args.n_dist_samples)
-        fm_true, fm_pred, _ = evaluate_intervention(sem, straf, dataset,
+        fm_true, fm_pred, _ = evaluate_intervention(sem, straf.flow, dataset,
                                                     args.n_eval_points,
                                                     args.n_dist_samples)
 

@@ -278,8 +278,8 @@ class CausalARFlowTrainer:
 
         train_np, val_np = train_test_split(data, train_size=self.split_ratio)
 
-        train = CustomSyntheticDatasetDensity(train_np)
-        val = CustomSyntheticDatasetDensity(val_np)
+        train = CustomSyntheticDatasetDensity(train_np.astype(np.float32))
+        val = CustomSyntheticDatasetDensity(val_np.astype(np.float32))
 
         train_dl = DataLoader(train, shuffle=True, batch_size=self.batch_size)
         val_dl = DataLoader(val, shuffle=False, batch_size=self.batch_size)
