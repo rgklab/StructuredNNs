@@ -61,6 +61,9 @@ python run_binary_experiment.py --experiment_name binary_random_sparse_d15_n2000
 ### Density Estimation with Structured Normalizing Flows
 The StrNN can be integrated into Normalizing Flow architectures for more complex density estimation tasks. We insert the StrNN into autoregressive flows and continuous normalizing flows. It replaces the feed forward networks used to represent the conditioner and flow dynamics, respectively, allowing them to respect known structure. An example to initialize these flow estimators are shown below. Baseline flows are also implemented. 
 ```
+import numpy as np
+import torch
+
 from strnn.models.discrete_flows import AutoregressiveFlowFactory
 from strnn.models.continuous_flows import ContinuousFlowFactory
 
