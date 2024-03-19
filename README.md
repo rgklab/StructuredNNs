@@ -35,7 +35,7 @@ out_dim = A.shape[0]
 in_dim = A.shape[1]
 hid_dim = (50, 50)
 
-strnn = StrNN(in_dim, hid_dim, out_dim, opt_type="greedy', adjacency=A)
+strnn = StrNN(in_dim, hid_dim, out_dim, opt_type="greedy", adjacency=A)
 
 x = torch.randn(in_dim)
 y = strnn(x)
