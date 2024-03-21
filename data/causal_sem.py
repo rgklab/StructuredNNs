@@ -229,9 +229,16 @@ class SparseSEM(LinAddSEM):
 
         Args:
             dimension: Size of the graph
-            noise_mean_param: Parameters to generate noise mean
-            noise_std_param: Parameters to generate noise std
-            adj_gen_param: Parameters to generate adjacency weight matrix
+            noise_mean_param:
+                Range of uniform distribution used to generate noise
+                distribution means.
+            noise_std_param:
+                Range of uniform distribution used to generate noise
+                distribution standard deviations.
+            adj_gen_param:
+                Range of uniform distribution used to generate DAG edge
+                coefficients. Note that values less than 1.5 in absolute
+                value are rounded to zero.
         """
         self.n_var = dimension
 

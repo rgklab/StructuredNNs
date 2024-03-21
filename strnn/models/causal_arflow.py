@@ -219,6 +219,7 @@ class CausalARFlowTrainer:
             config.optim.scheduler: Whether a learning rate scheduler is used
             config.optim.weight_decay: Adam weight decay value
             config.training.batch_size: Batch size used in training
+            config.training.early_stop_patience: Epochs before early stopping
             config.training.epoch: Number of training epochs
             config.training.seed: Random seed used for training
             config.training.split: Training split ratio
@@ -241,6 +242,7 @@ class CausalARFlowTrainer:
         self.seed: int = config.training.seed
         self.split_ratio: float = config.training.split
         self.verbose: bool = config.training.verbose
+        self.stopping_patience: int = config.training.early_stop_patience
 
         self.dim: int | None = None
         self.flow: CausalAutoregressiveFlowWithPrior | None = None
@@ -349,7 +351,7 @@ class CausalARFlowTrainer:
             scheduler = optim.lr_scheduler.ReduceLROnPlateau(
                 optimizer,
                 factor=0.1,
-                patience=3,
+                patience=5,
                 verbose=self.verbose
             )
         else:
@@ -365,6 +367,11 @@ class CausalARFlowTrainer:
     ) -> tuple[list, list]:
         """Train causal autoregressive flow.
 
+        Implements early stopping if the stopping_patience attribute is not
+        zero. This halts training if validation loss does not improve the
+        number of epochs specified by stopping_patience. The model is then set
+        to the weights which yielded lowest loss.
+
         Args:
             flow: Causal autoregressive flow to train
             train_dl: Train dataloader
@@ -379,6 +386,10 @@ class CausalARFlowTrainer:
 
         train_losses = []
         val_losses = []
+
+        best_val_loss = None
+        best_weights = None
+        patience_counter = 0
 
         for e in range(self.epochs):
             epoch_t_loss = []
@@ -413,14 +424,31 @@ class CausalARFlowTrainer:
             epoch_t_mean = np.mean(epoch_t_loss)
             epoch_v_mean = np.mean(epoch_v_loss)
 
+            # Handle early stopping
+            if self.stopping_patience > 0:
+                if best_val_loss is None or epoch_v_mean < best_val_loss:
+                    best_weights = flow.state_dict()
+                    best_val_loss = epoch_v_mean
+                    patience_counter = 0
+                elif patience_counter > self.stopping_patience:
+                    if self.verbose:
+                        print("Early stopping training.")
+                    break
+                else:
+                    patience_counter += 1
+
             if self.scheduler and scheduler is not None:
                 scheduler.step(epoch_t_mean)
 
-            if self.verbose:
+            if self.verbose and e % 10 == 0:
                 msg = "Epoch {}/{} \tTrain loss: {}\t Val loss: {}"
                 print(msg.format(e, self.epochs, epoch_t_mean, epoch_v_mean))
 
             train_losses.append(epoch_t_mean)
             val_losses.append(epoch_v_mean)
+
+        # Update model weights to best
+        if self.stopping_patience > 0:
+            flow.load_state_dict(best_weights)
 
         return train_losses, val_losses

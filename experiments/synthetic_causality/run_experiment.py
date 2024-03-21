@@ -13,8 +13,10 @@ from utils import dict2namespace
 from strnn.models.config_constants import *
 from strnn.models.causal_arflow import CausalARFlowTrainer
 
-BL_CONFIG_PATH = "./config/baseline.yaml"
-FM_CONFIG_PATH = "./config/masked.yaml"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+CAREFL_CONFIG_PATH = "./config/baseline.yaml"
+STRAF_CONFIG_PATH = "./config/masked.yaml"
 
 parser = argparse.ArgumentParser("Runs flows on causal synthetic dataset.")
 parser.add_argument("--n_graph_vars", type=int, required=True)
@@ -65,86 +67,94 @@ def main():
 
     sem = SparseSEM(args.n_graph_vars)
 
-    overall_bl_error = []
-    overall_fm_error = []
-
     if args.eval == "nrmse":
         eval_func = get_nrmse
     else:
         eval_func = get_mse
 
     # Load non-masked carefl config
-    bl_config_file = open(BL_CONFIG_PATH, "r")
-    bl_config_raw = yaml.load(bl_config_file, Loader=yaml.FullLoader)
-    bl_config = dict2namespace(bl_config_raw)
-    bl_config.device = torch.device('cpu')
-    bl_config.flow.nl = args.flow_steps
-    bl_config.flow.nh = args.hidden_width
-    bl_config.training.epochs = args.train_epochs
-    bl_config.training.verbose = False
+    carefl_config_file = open(CAREFL_CONFIG_PATH, "r")
+    carefl_config_raw = yaml.load(carefl_config_file, Loader=yaml.FullLoader)
+    carefl_config = dict2namespace(carefl_config_raw)
+    carefl_config.device = device
+    carefl_config.flow.nl = args.flow_steps
+    carefl_config.flow.nh = args.hidden_width
+    carefl_config.training.epochs = args.train_epochs
 
-    bl_arch_config = bl_config_raw["carefl"]
-    bl_arch_config = get_model_config(args, bl_arch_config)
-    bl_config.arch_config = bl_arch_config
+    carefl_arch_config = carefl_config_raw["carefl"]
+    carefl_arch_config = get_model_config(args, carefl_arch_config)
+    carefl_config.arch_config = carefl_arch_config
 
     # Load masked straf config
-    fm_config_file = open(FM_CONFIG_PATH, "r")
-    fm_config_raw = yaml.load(fm_config_file, Loader=yaml.FullLoader)
-    fm_config = dict2namespace(fm_config_raw)
-    fm_config.device = torch.device('cpu')
-    fm_config.flow.nl = args.flow_steps
-    fm_config.flow.nh = args.hidden_width
-    fm_config.training.epochs = args.train_epochs
-    fm_config.training.verbose = False
+    straf_config_file = open(STRAF_CONFIG_PATH, "r")
+    straf_config_raw = yaml.load(straf_config_file, Loader=yaml.FullLoader)
+    straf_config = dict2namespace(straf_config_raw)
+    straf_config.device = device
+    straf_config.flow.nl = args.flow_steps
+    straf_config.flow.nh = args.hidden_width
+    straf_config.training.epochs = args.train_epochs
 
-    fm_arch_config = fm_config_raw["straf"]
-    fm_arch_config = get_model_config(args, fm_arch_config)
-    fm_config.arch_config = fm_arch_config
+    straf_arch_config = straf_config_raw["straf"]
+    straf_arch_config = get_model_config(args, straf_arch_config)
+    straf_config.arch_config = straf_arch_config
+
+    overall_carefl_error = []
+    overall_straf_error = []
 
     for _ in range(args.n_trials):
-        # Vary sample generation
         dataset = sem.generate_samples(args.data_samples)
         bin_adj_mat = sem.get_adj_mat()
 
-        bl_config.arch_config[ADJ] = None
-        fm_config.arch_config[ADJ] = bin_adj_mat
+        carefl_config.arch_config[ADJ] = None
+        straf_config.arch_config[ADJ] = bin_adj_mat
 
-        carefl = CausalARFlowTrainer(bl_config)
-        straf = CausalARFlowTrainer(fm_config)
+        carefl = CausalARFlowTrainer(carefl_config)
+        straf = CausalARFlowTrainer(straf_config)
 
         # Train models
         carefl.fit_to_sem(dataset)
         straf.fit_to_sem(dataset)
 
         # Evaluate
-        bl_true, bl_pred, _ = evaluate_intervention(sem, carefl.flow, dataset,
-                                                    args.n_eval_points,
-                                                    args.n_dist_samples)
-        fm_true, fm_pred, _ = evaluate_intervention(sem, straf.flow, dataset,
-                                                    args.n_eval_points,
-                                                    args.n_dist_samples)
+        carefl_true, carefl_pred, _ = evaluate_intervention(
+            sem,
+            carefl.flow,
+            dataset,
+            args.n_eval_points,
+            args.n_dist_samples
+        )
 
-        bl_err, _ = eval_func(bl_true, bl_pred)
-        fm_err, _ = eval_func(fm_true, fm_pred)
+        straf_true, straf_pred, _ = evaluate_intervention(
+            sem,
+            straf.flow,
+            dataset,
+            args.n_eval_points,
+            args.n_dist_samples
+        )
 
-        bl_err = np.nanmean(bl_err)
-        fm_err = np.nanmean(fm_err)
+        carefl_err, _ = eval_func(carefl_true, carefl_pred)
+        straf_err, _ = eval_func(straf_true, straf_pred)
 
-        overall_bl_error.append(bl_err)
-        overall_fm_error.append(fm_err)
+        carefl_err = np.nanmean(carefl_err)
+        straf_err = np.nanmean(straf_err)
 
-    print(np.nanmean(overall_bl_error), np.nanstd(overall_bl_error))
-    print(np.nanmean(overall_fm_error), np.nanstd(overall_fm_error))
+        overall_carefl_error.append(carefl_err)
+        overall_straf_error.append(straf_err)
+
+    print(np.nanmean(overall_carefl_error), np.nanstd(overall_carefl_error))
+    print(np.nanmean(overall_straf_error), np.nanstd(overall_straf_error))
 
     exp_output = {
         "args": args,
-        "bl_out": overall_bl_error,
-        "fm_out": overall_fm_error,
+        "carefl_out": overall_carefl_error,
+        "straf_out": overall_straf_error,
         "sem": sem
     }
 
+    output_dir_name = "./output/"
     output_dir = Path("./output/")
     output_dir.mkdir(parents=False, exist_ok=True)
+
     out_fn = "linadd{}_{}hid_{}obs_{}runs_{}"
 
     out_fn = out_fn.format(
@@ -155,7 +165,7 @@ def main():
         args.eval
     )
 
-    torch.save(exp_output, output_dir + out_fn + ".pt")
+    torch.save(exp_output, output_dir_name + out_fn + ".pt")
 
 
 if __name__ == "__main__":

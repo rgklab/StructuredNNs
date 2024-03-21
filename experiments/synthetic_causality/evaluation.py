@@ -65,8 +65,8 @@ def evaluate_intervention(
                 break
 
             # Exclude interventional variable, and preceding variables
-            true_mat[int_ind+1:, int_ind, i] = true_dist[int_ind+1:]
-            pred_mat[int_ind+1:, int_ind, i] = p_dist[int_ind+1:]
+            true_mat[int_ind + 1:, int_ind, i] = true_dist[int_ind + 1:]
+            pred_mat[int_ind + 1:, int_ind, i] = p_dist[int_ind + 1:]
 
     return true_mat, pred_mat, val_mat
 
@@ -128,7 +128,7 @@ def evaluate_counterfactual(
                 error = sum((ctf_true[cf_ind:] - p_dist[cf_ind:]) ** 2)
                 errors.append(error)
 
-            err_mat[cf_ind+1:, cf_ind, i] = np.mean(errors)
+            err_mat[cf_ind + 1:, cf_ind, i] = np.mean(errors)
 
     return err_mat
 
