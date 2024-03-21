@@ -86,7 +86,7 @@ def test_strnn_empty_adjacency():
 
 
 def test_strnn_empty_adjacency_made():
-    """Test scenario where no adjacency is passed but opt_type is MADE
+    """Test scenario where no adjacency is passed but opt_type is MADE.
 
     Adjacency should default to fully lower triangular.
     """
@@ -113,7 +113,7 @@ def test_strnn_precomputed_erroneous():
 
 
 def test_strnn_update_masks():
-    """Test that update masks correctly interfaces with MaskedLinear"""
+    """Test that update masks correctly interfaces with MaskedLinear."""
     strnn = StrNN(4, [4, 4], 4, adjacency=strnn_adjacency)
 
     with patch("strnn.models.strNN.MaskedLinear.set_mask") as mock_method:

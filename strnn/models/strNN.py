@@ -18,10 +18,12 @@ OPT_MAP = {
 
 
 class MaskedLinear(nn.Linear):
+    """Weight-masked lienar layer.
+
+    A linear neural network layer, except with a configurable binary mask
+    on the weights.
     """
-    A linear neural network layer, except with a configurable
-    binary mask on the weights
-    """
+
     mask: torch.Tensor
 
     def __init__(
@@ -30,24 +32,47 @@ class MaskedLinear(nn.Linear):
             out_features: int,
             activation: str = 'relu'
     ):
+        """Initialize MaskedLinear layer.
+
+        Args:
+            in_features: Feature dimension of input data.
+            out_features: Feature dimension of output.
+            activation: Unused.
+        """
         super().__init__(in_features, out_features)
         # register_buffer used for non-parameter variables in the model
         self.register_buffer('mask', torch.ones(out_features, in_features))
         self.activation = activation
 
     def set_mask(self, mask: np.ndarray):
+        """Store mask for use during forward pass.
+
+        Arg:
+            mask: Mask applied to weight matrix.
+        """
         self.mask.data.copy_(torch.from_numpy(mask.astype(np.uint8).T))
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        # * is element-wise multiplication in numpy
+        """Compute forward pass for MaskedLinear.
+
+        Applies weight mask to weight matrix to block desired connections.
+
+        Args:
+            input: Input data.
+
+        Returns:
+            MaskedLinear output.
+        """
+        # Note: * is element-wise multiplication in numpy
         return F.linear(input, self.mask * self.weight, self.bias)
 
 
 class StrNN(nn.Module):
-    """
-    Main neural network class that implements a Structured Neural Network
+    """Main neural network class that implements a Structured Neural Network.
+
     Can also become a MADE or Zuko masked NN by specifying the opt_type flag
     """
+
     def __init__(
         self,
         nin: int,
@@ -57,7 +82,7 @@ class StrNN(nn.Module):
         opt_args: dict = {'var_penalty_weight': 0.0},
         precomputed_masks: np.ndarray | None = None,
         adjacency: np.ndarray | None = None,
-        activation: str = 'relu',
+        activation: str = 'relu'
     ):
         """Initialize a Structured Neural Network (StrNN).
 
@@ -125,15 +150,17 @@ class StrNN(nn.Module):
         self.update_masks()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Propagates the input forward through the StrNN network
-        :param x: input, sample_size by data_dimensions
-        :return: output, sample_size by output_dimensions
+        """Propagates the input forward through the StrNN network.
+
+        Args:
+            x: Input of size (sample_size by data_dimensions)
+        Returns:
+            Output of size (sample_size by output_dimensions)
         """
         return self.net(x)
 
     def update_masks(self):
-        """Updates masked linear layer masks to respect adjacency matrix."""
+        """Update masked linear layer masks to respect adjacency matrix."""
         if self.precomputed_masks is not None:
             # Load precomputed masks if provided
             masks = self.precomputed_masks

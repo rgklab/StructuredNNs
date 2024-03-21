@@ -8,10 +8,11 @@ from .odefunc import ODEfunc
 
 
 class CNF(nn.Module):
-    """
-    Local copy of FFJORD's cnf.py as FFJORD is unavailable as a package.
+    """Local copy of FFJORD's cnf.py as FFJORD is unavailable as a package.
+
     See: https://github.com/rtqichen/ffjord/blob/master/lib/layers/cnf.py
     """
+
     sqrt_end_time: torch.Tensor
 
     def __init__(
@@ -23,7 +24,7 @@ class CNF(nn.Module):
         atol: float = 1e-5,
         rtol: float = 1e-5
     ):
-        """Initializes a FFJORD CNF.
+        """Initialize a FFJORD CNF.
 
         Args:
             odefunc: Dynamics function.

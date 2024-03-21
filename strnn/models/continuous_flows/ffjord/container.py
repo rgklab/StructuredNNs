@@ -7,11 +7,17 @@ from ....models import TTuple
 
 
 class SequentialFlow(nn.Module):
-    """
-    Local copy of FFJORD's cnf.py as FFJORD is unavailable as a package.
+    """Local copy of FFJORD's cnf.py as FFJORD is unavailable as a package.
+
     See: https://github.com/rtqichen/ffjord/blob/master/lib/layers/container.py
     """
+
     def __init__(self, layersList: list[CNF]):
+        """Initialize SequentialFlow.
+
+        Args:
+            layersList: List of continuous flow steps.
+        """
         super().__init__()
         self.chain = nn.ModuleList(layersList)
 

@@ -1,6 +1,3 @@
-"""
-Code inspired by: https://github.com/AWehenkel/Graphical-Normalizing-Flows.
-"""
 import torch
 import torch.nn as nn
 
@@ -18,7 +15,7 @@ class AutoregressiveFlowStep(NormalizingFlow):
     """A single normalizing flow step which can be chained together."""
 
     def __init__(self, conditioner: Conditioner, normalizer: Normalizer):
-        """Initializes an autoregressive flow step.
+        """Initialize an autoregressive flow step.
 
         Args:
             conditioner: Flow conditioner.
@@ -29,7 +26,7 @@ class AutoregressiveFlowStep(NormalizingFlow):
         self.normalizer = normalizer
 
     def forward(self, x: torch.Tensor) -> TTuple:
-        """Computes forward pass of flow step.
+        """Compute forward pass of flow step.
 
         Args:
             x: Input data.
@@ -41,7 +38,7 @@ class AutoregressiveFlowStep(NormalizingFlow):
         return z, torch.log(jac).sum(1)
 
     def invert(self, z: torch.Tensor) -> torch.Tensor:
-        """Performs inverse transformation from latent to observed space.
+        """Perform inverse transformation from latent to observed space.
 
         Args:
             z: Input data from latent space.
@@ -63,7 +60,7 @@ class AutoregressiveFlow(NormalizingFlow):
     """Implements a chain of autoregressive flow steps."""
 
     def __init__(self, steps: list[AutoregressiveFlowStep], permute: bool):
-        """Initializes AutoregressiveFlow.
+        """Initialize AutoregressiveFlow.
 
         Args:
             steps: List of AutoregressiveFlowSteps to be composed.
@@ -74,7 +71,7 @@ class AutoregressiveFlow(NormalizingFlow):
         self.steps = nn.ModuleList(steps)
 
     def forward(self, x: torch.Tensor) -> TTuple:
-        """Computes forward pass through chained steps.
+        """Compute forward pass through chained steps.
 
         Args:
             x: Input data.
@@ -97,7 +94,7 @@ class AutoregressiveFlow(NormalizingFlow):
         return z, jac_tot
 
     def invert(self, z: torch.Tensor) -> torch.Tensor:
-        """Inverts transform of composed flow steps.
+        """Inverted transform of composed flow steps.
 
         Args:
             z: Input data from latent space.
@@ -116,7 +113,7 @@ class AutoregressiveFlow(NormalizingFlow):
         return x
 
     def invert_gnf(self, z: torch.Tensor) -> torch.Tensor:
-        """Performs inversion according to the GNF offical repo.
+        """Perform inversion according to the GNF offical repo.
 
         Importantly, variables are NOT re-permuted. This leads to
         poor sample quality. The order of flow steps is also
@@ -137,7 +134,7 @@ class AutoregressiveFlowFactory(NormalizingFlowFactory):
     """Constructs AutoregressiveFlow."""
 
     def __init__(self, config: dict):
-        """Initializes AutoregressiveFlowFactory.
+        """Initialize AutoregressiveFlowFactory.
 
         Args:
             config: Dictionary of model initialization attributes.
@@ -146,7 +143,7 @@ class AutoregressiveFlowFactory(NormalizingFlowFactory):
         self.parse_config(config)
 
     def parse_config(self, config: dict):
-        """Parses config and stores relevant attributes."""
+        """Parse config and stores relevant attributes."""
         self.input_dim = config[INPUT_DIM]
         self.adj = config[ADJ]
         self.flow_steps = config[FLOW_STEPS]
@@ -180,7 +177,7 @@ class AutoregressiveFlowFactory(NormalizingFlowFactory):
             raise ValueError("Unknown normalizer type.")
 
     def _build_flow_step(self) -> AutoregressiveFlowStep:
-        """Constructs a single autoregressive flow step according to config.
+        """Construct a single autoregressive flow step according to config.
 
         Returns:
             Initialized AutoregressiveFlowStep.
@@ -232,7 +229,7 @@ class AutoregressiveFlowFactory(NormalizingFlowFactory):
         return AutoregressiveFlowStep(conditioner, normalizer)
 
     def _build_flow(self) -> AutoregressiveFlow:
-        """Builds AutoregressiveFlow out of composed flow steps.
+        """Build AutoregressiveFlow out of composed flow steps.
 
         Returns:
             Composition of autoregressive flow steps.

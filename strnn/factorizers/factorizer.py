@@ -28,9 +28,11 @@ def check_masks(masks: list[np.ndarray], adjacency: np.ndarray) -> bool:
 
 
 class AdjacencyFactorizer(ABC):
+    """Interface for adjacency factorization algorithms."""
 
     @abstractmethod
     def __init__(self, adjacency: np.ndarray, opt_args: dict | None = None):
+        """Abstract initialization template."""
         pass
 
     @abstractmethod
@@ -38,4 +40,5 @@ class AdjacencyFactorizer(ABC):
         self,
         hidden_sizes: tuple[int, ...]
     ) -> list[np.ndarray]:
+        """Abstract factorization method."""
         pass

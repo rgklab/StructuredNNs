@@ -44,7 +44,6 @@ def test_strnn_check_masks_valid():
 
 def test_strnn_check_masks_valid_subopt():
     """Test that suboptimal but valid masks result in positive check."""
-
     subopt_mask = greedy_mask_1.copy()
     subopt_mask[0][0] = 0
 

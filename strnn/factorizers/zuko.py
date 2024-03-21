@@ -3,6 +3,8 @@ import torch
 
 
 class ZukoFactorizer:
+    """Implements factorization algorithm from Zuko repository."""
+
     def __init__(self, adjacency: np.ndarray, opt_args: dict | None = None):
         """Initialize Zuko Factorizer.
 

@@ -25,6 +25,7 @@ batch_size = 32
 
 
 def test_gnf_conditioner_no_hot():
+    """Test dimension correctness of GNF that doesn't append OHE to input."""
     test_in = torch.randn(batch_size, config["input_dim"])
 
     gnf_config = config.copy()
@@ -38,6 +39,7 @@ def test_gnf_conditioner_no_hot():
 
 
 def test_gnf_conditioner_hot():
+    """Test dimension correctness of GNF that appends OHE to input."""
     test_in = torch.randn(batch_size, config["input_dim"])
 
     gnf_config = config.copy()
@@ -51,6 +53,7 @@ def test_gnf_conditioner_hot():
 
 
 def test_straf_conditioner():
+    """Test dimension correctness of StrNN conditioner."""
     test_in = torch.randn(batch_size, config["input_dim"])
 
     straf_config = config.copy()

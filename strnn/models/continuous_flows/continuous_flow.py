@@ -18,7 +18,7 @@ class ContinuousFlow(NormalizingFlow):
     """Wraps FFJORD CNF to abide to NormalizingFlow interface."""
 
     def __init__(self, ffjord_cnf: SequentialFlow):
-        """Initializes ContinuousFlow.
+        """Initialize ContinuousFlow.
 
         Args:
             ffjord_cnf: FFJORD CNF module.
@@ -27,7 +27,7 @@ class ContinuousFlow(NormalizingFlow):
         self.model = ffjord_cnf
 
     def forward(self, x: torch.Tensor) -> TTuple:
-        """Computes forward CNF pass.
+        """Compute forward CNF pass.
 
         Args:
             x: Input data.
@@ -37,7 +37,7 @@ class ContinuousFlow(NormalizingFlow):
         return self.model(x, reverse=False)
 
     def invert(self, z: torch.Tensor) -> torch.Tensor:
-        """Computes inverse transform from latent to data space.
+        """Compute inverse transform from latent to data space.
 
         Args:
             z: Input data from latent distribution.
@@ -48,13 +48,19 @@ class ContinuousFlow(NormalizingFlow):
 
 
 class AdjacencyModifier:
-    """
+    """Helper class to modify adjacency matrix.
+
     Since CNFs rely on the existence of unique ODE solutions to ensure
     invertibility, we don't need a lower triangular adjacency. We can thus
-    experiment with the configurations that yield better results.
+    experiment with adjacencies that yield better results.
+
+    Empirically, adding the main diagonal to adjacency is required for good
+    performance, while reflecting the adjacency does not yield significant
+    performance gains.
     """
+
     def __init__(self, modifiers: list[str]):
-        """Initializes AdjacencyModifier.
+        """Initialize AdjacencyModifier.
 
         Valid modifiers are applied in input order, and be chosen from:
         ["main_diagonal", "reflect"]
@@ -65,7 +71,7 @@ class AdjacencyModifier:
         self.modifiers = modifiers
 
     def modify_adjacency(self, adj_mat: np.ndarray) -> np.ndarray:
-        """Applies all modifiers onto adjacency matrix.
+        """Apply all modifiers onto adjacency matrix.
 
         Args:
             adj_mat: 2D binary adjacency matrix.
@@ -87,7 +93,7 @@ class AdjacencyModifier:
         return adj_mat
 
     def _mod_add_diagonal(self, adj_mat: np.ndarray) -> np.ndarray:
-        """Adds ones to main diagonal.
+        """Add ones to main diagonal.
 
         Args:
             adj_mat: 2D binary adjacency matrix.
@@ -97,7 +103,7 @@ class AdjacencyModifier:
         return adj_mat + np.eye(adj_mat.shape[0])
 
     def _mod_reflect(self, adj_mat: np.ndarray) -> np.ndarray:
-        """Reflects lower triangular values to upper triangular positions.
+        """Reflect lower triangular values to upper triangular positions.
 
         Args:
             adj_mat: 2D binary adjacency matrix.
@@ -109,12 +115,22 @@ class AdjacencyModifier:
 
 class ContinuousFlowFactory(NormalizingFlowFactory):
     """Constructs a FFJORD continuous normalizing flow."""
+
     def __init__(self, config: dict):
+        """Initialize ContinuousFlowFactory.
+
+        Args:
+            config: ContinuousFlow architecture parameters.
+        """
         super().__init__(config)
         self.parse_config(config)
 
     def parse_config(self, config: dict):
-        """Parses config for relevant arguments."""
+        """Parse config for relevant arguments.
+
+        Args:
+            config: ContinuousFlow architecture parameters.
+        """
         self.input_dim = config[INPUT_DIM]
         self.hidden_dim = config[ODENET_HID]
         self.lin_type = config[ODENET_LIN]
@@ -137,7 +153,7 @@ class ContinuousFlowFactory(NormalizingFlowFactory):
         self.flow_steps = config[FLOW_STEPS]
 
     def build_odenet(self) -> ODENet:
-        """Constructs neural network used to model ODE dynamics function.
+        """Construct neural network used to model ODE dynamics function.
 
         Returns:
             Neural network used to parameterize ODE dynamics.
@@ -171,7 +187,7 @@ class ContinuousFlowFactory(NormalizingFlowFactory):
         return net
 
     def build_cnf_step(self) -> CNF:
-        """Builds a FFJORD continuous normalizing flow.
+        """Build a FFJORD continuous normalizing flow.
 
         TODO: Reimplement capability to regularize flows
 
@@ -192,7 +208,7 @@ class ContinuousFlowFactory(NormalizingFlowFactory):
         return cnf
 
     def _build_flow(self) -> ContinuousFlow:
-        """Builds a chain of continuous normalizing flows.
+        """Build a chain of continuous normalizing flows.
 
         Returns:
             Sequence of FFJORD CNFs wrapped in ContinuousFlow class

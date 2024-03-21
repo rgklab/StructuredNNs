@@ -4,6 +4,7 @@ from .factorizer import AdjacencyFactorizer
 
 
 class MADEFactorizer(AdjacencyFactorizer):
+    """Implements factorization algorithm from MADE."""
 
     def __init__(self, adjacency: np.ndarray, opt_args: dict | None = None):
         """Initialize MADE factorizer.

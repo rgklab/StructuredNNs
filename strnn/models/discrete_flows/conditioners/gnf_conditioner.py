@@ -8,10 +8,11 @@ from .conditioner import Conditioner
 
 
 class GNFMLP(nn.Module):
-    """
-    MLP used in GNF conditioner.
+    """MLP used in GNF conditioner.
+
     Code taken from: https://github.com/AWehenkel/Graphical-Normalizing-Flows.
     """
+
     def __init__(
         self,
         input_dim: int,
@@ -19,7 +20,7 @@ class GNFMLP(nn.Module):
         output_dim: int,
         act_type: str
     ):
-        """Initializes a GNF MLP.
+        """Initialize a GNF MLP.
 
         Args:
             input_dim: Input dimension.
@@ -47,8 +48,7 @@ class GNFMLP(nn.Module):
 
 
 class GNFConditioner(Conditioner):
-    """
-    Conditioner from Graphical Normalizing Flows.
+    """Conditioner from Graphical Normalizing Flows.
 
     Code taken from: https://github.com/AWehenkel/Graphical-Normalizing-Flows.
 
@@ -57,6 +57,7 @@ class GNFConditioner(Conditioner):
     adjacency matrix based on data. While helpful, this was unrelated to our
     method so the code was removed for clarity.
     """
+
     def __init__(
         self,
         input_dim: int,
@@ -66,7 +67,7 @@ class GNFConditioner(Conditioner):
         hot_encoding: bool,
         adj_mat: np.ndarray
     ):
-        """Initializes a GNF Conditioner
+        """Initialize a GNF Conditioner.
 
         Args:
             input_dim: Input dimension.

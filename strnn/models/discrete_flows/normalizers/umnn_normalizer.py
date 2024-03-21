@@ -14,11 +14,25 @@ def _flatten(sequence):
 
 
 class ELUPlus(nn.Module):
+    """Implement ELUPlus activation.
+
+    Combines an ELU activation with a positive constant term.
+    """
+
     def __init__(self):
+        """Initialize ELUPlus."""
         super().__init__()
         self.elu = nn.ELU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Compute ELUPlus activation.
+
+        Args:
+            x: Input logits.
+
+        Returns:
+            Activated output.
+        """
         return self.elu(x) + 1.05
 
 
@@ -27,8 +41,9 @@ class IntegrandNet(nn.Module):
 
     Code taken from: https://github.com/AWehenkel/Graphical-Normalizing-Flows.
     """
+
     def __init__(self, hidden_dim: tuple[int], n_param_per_dim: int):
-        """Initializes IntegrandNet.
+        """Initialize IntegrandNet.
 
         Args:
             hidden_dim: Tuple of hidden widths of network.
@@ -64,11 +79,11 @@ class IntegrandNet(nn.Module):
 
 
 class MonotonicNormalizer(Normalizer):
-    """
-    Monotonic normalizer which uses UMNN to transform data.
+    """Monotonic normalizer which uses UMNN to transform data.
 
     Code taken from: https://github.com/AWehenkel/Graphical-Normalizing-Flows.
     """
+
     def __init__(
         self,
         integrand_hidden: tuple[int],
@@ -76,7 +91,7 @@ class MonotonicNormalizer(Normalizer):
         nb_steps: int,
         solver: str
     ):
-        """Initializes MonotonicNormalizer.
+        """Initialize MonotonicNormalizer.
 
         Args:
             integrand_hidden: Hidden widths of integrand network.

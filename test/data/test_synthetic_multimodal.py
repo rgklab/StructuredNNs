@@ -5,6 +5,7 @@ from data.synthetic_multimodal import SyntheticMultimodalDataset
 
 
 def test_synthetic_multimodal():
+    """Test dimensional correctness of synthetic mm data generation."""
     data_dim = 10
     n_samples = 1000
 
@@ -23,6 +24,7 @@ def test_synthetic_multimodal():
 
 
 def test_synthetic_multimodal_sample_seed_unfixed():
+    """Test that synthetic data generation results in unique data."""
     data_dim = 10
     n_samples = 1000
     seed_1 = 2547
@@ -44,6 +46,7 @@ def test_synthetic_multimodal_sample_seed_unfixed():
 
 
 def test_synthetic_multimodal_sample_seed_fixed():
+    """Test synthetic data generation reproducibility with fixed seed."""
     data_dim = 10
     n_samples = 1000
     seed = 2547
@@ -66,6 +69,7 @@ def test_synthetic_multimodal_sample_seed_fixed():
 
 
 def test_synthetic_multimodal_param_initialize():
+    """Test that loading data generator from config is reproducible."""
     data_dim = 10
     n_samples = 1000
     seed = 2547

@@ -4,6 +4,16 @@ from .factorizer import AdjacencyFactorizer
 
 
 class GreedyFactorizer(AdjacencyFactorizer):
+    """Implements greedy adjacency factorizor.
+
+    Main factorization algorithm introduced by StrNN paper.
+
+    Aims to maximize connections in resulting mask matrices. Factorization
+    makes greedy assumption, which copies non-zero rows from the adjacency
+    matrix into M2 during factorization. Empirically, this results in a
+    factorization that has close to the optimal number of connections
+    without high asymptotic cost.
+    """
 
     def __init__(self, adjacency: np.ndarray, opt_args: dict | None = None):
         """Initialize a greedy algorithm mask factorizer.
