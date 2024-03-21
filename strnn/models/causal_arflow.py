@@ -185,8 +185,8 @@ class CausalAutoregressiveFlowWithPrior(nn.Module):
         if x_obs.shape[0] != 1:
             raise ValueError("Counterfactual only accepts single example.")
 
-        if type(x_obs) is np.ndarray:
-            x_obs = torch.Tensor(x_obs)
+        if isinstance(x_obs, np.ndarray):
+            x_obs = torch.from_numpy(x_obs)
 
         # abduction:
         z_obs = self.forward(x_obs)[0]
@@ -388,7 +388,7 @@ class CausalARFlowTrainer:
         val_losses = []
 
         best_val_loss = None
-        best_weights = None
+        best_weights = flow.state_dict()
         patience_counter = 0
 
         for e in range(self.epochs):

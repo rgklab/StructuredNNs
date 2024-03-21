@@ -212,7 +212,7 @@ class RandomSEM(LinAddSEM):
         adj_mat = uniform(*adj_gen_param, size=(dimension, dimension))
         self.adj_mat = np.tril(adj_mat)
 
-        super().init__(self.noise_means, self.noise_stds, self.adj_mat)
+        super().__init__(self.noise_means, self.noise_stds, self.adj_mat)
 
 
 class SparseSEM(LinAddSEM):
