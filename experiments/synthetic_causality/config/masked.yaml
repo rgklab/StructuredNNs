@@ -11,12 +11,7 @@ straf:
 flow:
   nl: 5
   nh: 10
-  batch_norm: false
   prior_dist: 'laplace'
-  # for CL
-  # scale_base: true
-  # shift_base: true
-  # scale: true
 
 
 training:
@@ -25,6 +20,7 @@ training:
   split: .8
   seed: 0
   batch_size: 32
+  early_stop_patience: 25
 
 
 optim:
