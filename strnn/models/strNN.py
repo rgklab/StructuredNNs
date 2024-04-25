@@ -18,6 +18,8 @@ OPT_MAP = {
     "zuko": ZukoFactorizer,
 }
 
+def ian_normal() -> tuple[torch.Tensor, torch.Tensor]:
+    pass
 
 class MaskedLinear(nn.Linear):
     """Weight-masked lienar layer.
