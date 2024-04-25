@@ -33,5 +33,3 @@ NORM_TYPE = "normalizer_type"
 UMNN_INT_HID = "umnn_int_hid_dim"
 UMNN_INT_SOLVER = "umnn_int_solver"
 UMNN_INT_STEP = "umnn_int_step"
-
-IAN_INIT = "ian_init"

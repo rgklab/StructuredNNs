@@ -5,11 +5,10 @@ from math import pi
 import torch
 import torch.nn as nn
 
-from strnn.models.config_constants import 
-
 
 def standard_normal_logprob(z: torch.Tensor) -> torch.Tensor:
     """Evaluate likelihood of z under standard normal.
+
     Args:
         z: Input data.
 

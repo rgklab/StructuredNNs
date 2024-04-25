@@ -17,8 +17,7 @@ class StrNNConditioner(Conditioner):
         act_type: str,
         adj_mat: np.ndarray,
         opt_type: str,
-        opt_args: dict,
-        ian_init: bool
+        opt_args: dict
     ):
         """Initialize an StrNN conditioner.
 
@@ -34,7 +33,7 @@ class StrNNConditioner(Conditioner):
         super().__init__()
         self.input_dim = input_dim
         self.strnn = StrNN(input_dim, hidden_dim, input_dim * n_out_param,
-                           opt_type, opt_args, None, adj_mat, act_type, ian_init)
+                           opt_type, opt_args, None, adj_mat, act_type)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Compute forward pass for StrNN Conditioner.
