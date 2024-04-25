@@ -7,22 +7,7 @@
 
 ## Introduction
 
-We introduce the **Structured Neural Network (StrNN)**, a network architecture that enforces functional independence relationships between inputs and outputs via weight masking.
-
-## Citation
-
-Please use the following citation if you use this code or methods in your own work.
-
-```bibtex
-@inproceedings{
-    chen2023structured,
-    title = {Structured Neural Networks for Density Estimation and Causal Inference},
-    author = {Asic Q Chen, Ruian Shi, Xiang Gao, Ricardo Baptista, Rahul G Krishnan},
-    booktitle = {Thirty-seventh Conference on Neural Information Processing Systems},
-    year = {2023},
-    url = {https://arxiv.org/abs/2311.02221}
-}
-```
+We introduce the **Structured Neural Network (StrNN)**, a network architecture that enforces functional independence relationships between inputs and outputs via weight masking. This is an efficient way to inject prior assumed structure into arbitrary neural networks, which could lead to applications in improved density estimation, generative modelling, and causal inference. 
 
 ## Setup
 The StrNN can be installed using `pip install strnn`. 
@@ -46,27 +31,39 @@ A = np.array([
     [1, 0, 1, 0]
 ])
 
-in_dim = A.shape[0]
-out_dim = A.shape[1]
+out_dim = A.shape[0]
+in_dim = A.shape[1]
 hid_dim = (50, 50)
 
-strnn = StrNN(in_dim, hid_dim, out_dim, adjacency=A)
+strnn = StrNN(in_dim, hid_dim, out_dim, opt_type="greedy", adjacency=A)
 
 x = torch.randn(in_dim)
 y = strnn(x)
 ```
+The most important parameter to the StrNN class here is `opt_type`, which specifies how the StrNN factorizes the adjacency matrix into weight masks, dictating which paths are zeroed out in the resulting masked neural network. We currently support three factorization options:
+1. Greedy: Algorithm 1 in the paper; an efficient greedy algorithm that approximates the optimization objective (Equation 2) but keeps *zero reconstruction loss* when it comes to the sparsity pattern of adjacency matrix $A$.
+2. Zuko: a similar approximate algorithm inspired by [this repo](https://github.com/francois-rozet/zuko).
+3. MADE: baseline algorithm from Germain et al that only supports the fully autoregressive structure.
 
-The StrNN can be used for density estimation, for example when integrated into normalizing flows, as we show in the experiments below.
+The StrNN can be used to improve density estimation capabilities when an adjacency structure is known for the task, for example when integrated into normalizing flows, as we show in the experiments below.
 
 ## Examples
 
-Scripts to reproduce all experiments from the paper can be found in the /experiments folder. Here we provide some code examples on how StrNN can be used.
+Scripts to reproduce all experiments from the paper can be found in the `/experiments` folder. Here we provide some code examples on how StrNN can be used.
 
 ### Binary Density Estimation with StrNN
 
-### Density Estimation with Structured Normalizing Flows
-The StrNN can be integrated into Normalizing Flow architectures to improve density estimation capabilities when an adjacency structure is known for the task. We insert the StrNN into autoregressive flows and continuous normalizing flows. It replaces the feed forward networks used to represent the conditioner and flow dynamics, respectively, allowing them to respect known structure. An example to initialize these flow estimators are shown below. Baseline flows are also implemented. 
+The StrNN can be directly used to perform density estimation on binary or Gaussian data, similar to how MADE was used in Germain et al. In fact, the StrNN density estimator class in `models/strNNDensityEstimator.py` can be used for density estimation wehenver we have a closed parametric form in mind for the data generating process, although this is seldom the case in practice. The training script and sample experiment configs for this basic density estimator can be found under `/experiments/binary_and_gaussian/`. Use the following command to reproduce one of the binary experiments from our paper: 
 ```
+python run_binary_experiment.py --experiment_name binary_random_sparse_d15_n2000_StrNN_best --wandb_name strnn
+```
+
+### Density Estimation with Structured Normalizing Flows
+The StrNN can be integrated into Normalizing Flow architectures for more complex density estimation tasks. We insert the StrNN into autoregressive flows and continuous normalizing flows. It replaces the feed forward networks used to represent the conditioner and flow dynamics, respectively, allowing them to respect known structure. An example to initialize these flow estimators are shown below. Baseline flows are also implemented. 
+```
+import numpy as np
+import torch
+
 from strnn.models.discrete_flows import AutoregressiveFlowFactory
 from strnn.models.continuous_flows import ContinuousFlowFactory
 
@@ -118,4 +115,18 @@ python run_experiment_mm.py --dataset_name multimodal --model_config straf_best 
 
 Hyperparameter values / grids are available in the paper appendix. Note that we must modify the adjacency matrix to include the main diagonal for the StrCNF to work well. The CIs are generated using model seeds: `[2541 2547 412 411 321 3431 4273 2526]`.
 
-### Causal Inference with StrAF
+## Citation
+
+Please use the following citation if you use this code or methods in your own work.
+
+```bibtex
+@inproceedings{
+    chen2023structured,
+    title = {Structured Neural Networks for Density Estimation and Causal Inference},
+    author = {Asic Q Chen, Ruian Shi, Xiang Gao, Ricardo Baptista, Rahul G Krishnan},
+    booktitle = {Thirty-seventh Conference on Neural Information Processing Systems},
+    year = {2023},
+    url = {https://arxiv.org/abs/2311.02221}
+}
+```
+

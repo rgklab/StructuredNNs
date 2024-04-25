@@ -51,7 +51,7 @@ args = parser.parse_args()
 
 
 def parse_args_model(args: argparse.Namespace, config: dict) -> dict:
-    """Updates model config with command line arguments.
+    """Update model config with command line arguments.
 
     Args:
         args: Command line arguments.
@@ -90,6 +90,7 @@ def parse_args_model(args: argparse.Namespace, config: dict) -> dict:
 
 
 def main():
+    """Training script for StrAF and other normalizing flows."""
     generator, data = load_data(args.dataset_name, args.n_samples,
                                 args.split_ratio, args.data_random_seed)
 

@@ -27,7 +27,7 @@ args = parser.parse_args()
 
 
 def evaluate_loss(model: NormalizingFlow, test_dl: DataLoader) -> float:
-    """Evaluates test negative log likelihood.
+    """Evaluate test negative log likelihood.
 
     Args:
         model: Model to evaluate.
@@ -49,7 +49,7 @@ def evaluate_loss(model: NormalizingFlow, test_dl: DataLoader) -> float:
 
 
 def get_runs_by_model(wandb_name: str, model_config: str) -> list:
-    """Returns all runs associated with a particular model config.
+    """Return all runs associated with a particular model config.
 
     This method is mainly used to select a single model for which multiple
     random initializations have been performed.
@@ -70,7 +70,7 @@ def get_runs_by_model(wandb_name: str, model_config: str) -> list:
 
 
 def get_run_loss(run: wandb.apis.public.Run) -> float:
-    """Loads model weights from a wandb run and evaluates test loss.
+    """Load model weights from a wandb run and evaluates test loss.
 
     Args:
         run: The wandb run object containing model config and weights.
@@ -117,6 +117,7 @@ def get_run_loss(run: wandb.apis.public.Run) -> float:
 
 
 def main():
+    """Evaluate performance across runs using same config."""
     print(args.model_config, flush=True)
     runs = get_runs_by_model(args.wandb_name, args.model_config)
 

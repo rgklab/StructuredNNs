@@ -1,6 +1,7 @@
 import pytest
 
 import numpy as np
+import torch
 
 from strnn.models.config_constants import *
 from strnn.models.continuous_flows.continuous_flow import *
@@ -38,6 +39,7 @@ rand_in = torch.randn(batch_size, adj_mat.shape[0])
 
 
 def test_factory():
+    """Test initialization of CNF factory."""
     config[ODENET_LIN] = "strnn"
     factory = ContinuousFlowFactory(config)
 
@@ -46,6 +48,7 @@ def test_factory():
 
 @pytest.mark.parametrize("ode_type", ["strnn", "weilbach", "fully_connected"])
 def test_cnf_forward(ode_type):
+    """Test dimensional correctness of CNF forward pass."""
     config[ODENET_LIN] = ode_type
     factory = ContinuousFlowFactory(config)
     cnf = factory.build_flow()
@@ -63,6 +66,7 @@ def test_cnf_forward(ode_type):
 
 
 def test_adj_modifier_diag():
+    """Test main diagonal adjacency modification."""
     true_adj_mat = np.array([
         [1, 0, 0, 0],
         [1, 1, 0, 0],
@@ -77,6 +81,7 @@ def test_adj_modifier_diag():
 
 
 def test_adj_modifier_reflect():
+    """Test reflection adjacency modification."""
     true_adj_mat = np.array([
         [0, 1, 0, 0],
         [1, 0, 1, 1],
@@ -91,6 +96,7 @@ def test_adj_modifier_reflect():
 
 
 def test_adj_modifier_reflect_diag():
+    """Test combination of diagonal and reflection adjacency modification."""
     true_adj_mat = np.array([
         [1, 1, 0, 0],
         [1, 1, 1, 1],

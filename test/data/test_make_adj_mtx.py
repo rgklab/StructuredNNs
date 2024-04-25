@@ -4,6 +4,7 @@ from data.make_adj_mtx import generate_adj_mat_uniform
 
 
 def test_make_adj_mtx():
+    """Test uniform adjacency generation is lower triangular."""
     dim = 10
     threshold = 0.5
 

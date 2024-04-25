@@ -18,7 +18,7 @@ def load_data(
     random_seed: int,
     config_path: str = "./config/data_config.yaml"
 ) -> tuple[SyntheticMultimodalDataset, DSTuple]:
-    """Generates data samples, applies preprocessing and data splits.
+    """Generate data samples, applies preprocessing and data splits.
 
     Args:
         dataset_name: Name of dataset in config.

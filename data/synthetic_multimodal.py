@@ -6,8 +6,7 @@ from typing import Callable
 
 
 class SyntheticMultimodalDataset:
-    """
-    Generates a synthetic multimodal dataset.
+    """Generate a synthetic multimodal dataset.
 
     If a variable is independent of preceding variables, then it is generated
     as a mixture of Gaussians each with randomly sampled means and variances.
@@ -15,6 +14,7 @@ class SyntheticMultimodalDataset:
     Otherwise, variables are determined as a weighted non-linear relationship
     of preceding variables plus a standard noise term.
     """
+
     def __init__(
         self,
         data_dim: int,
@@ -25,7 +25,7 @@ class SyntheticMultimodalDataset:
         mean_range: tuple[int, int],
         std_range: tuple[int, int],
     ):
-        """Initializes generator for a synthetic multimodal dataset.
+        """Initialize generator for a synthetic multimodal dataset.
 
         Args:
             data_dim: Dimension of generated samples.
@@ -52,7 +52,7 @@ class SyntheticMultimodalDataset:
         self.w_mat = self.generate_weight_mat()
 
     def generate_weight_mat(self) -> np.ndarray:
-        """Generates weight matrix describing relationships between nodes.
+        """Generate weight matrix describing relationships between nodes.
 
         Returns:
             2D matrix containing weights of variable relationships.
@@ -144,7 +144,7 @@ class SyntheticMultimodalDataset:
         n_samples: int,
         seed: int | None = None
     ) -> np.ndarray:
-        """Generates samples from synthetic distribution.
+        """Generate samples from synthetic distribution.
 
         Initializes distributional parameters if they are not initialized yet.
 
@@ -189,7 +189,7 @@ class SyntheticMultimodalDataset:
         return data_arr.T
 
     def initialize_distributions(self):
-        """Initializes parameters of data generation distributions."""
+        """Initialize parameters of data generation distributions."""
         dist_params = []
 
         for row in self.w_mat:
@@ -214,7 +214,7 @@ class SyntheticMultimodalDataset:
 
     @classmethod
     def init_from_param(cls, params: list[dict]) -> SyntheticMultimodalDataset:
-        """Initializes a generator object from distributional parameters.
+        """Initialize a generator object from distributional parameters.
 
         Args:
             params: Dictionary containing data generating distribution

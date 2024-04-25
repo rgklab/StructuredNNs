@@ -12,8 +12,11 @@ from ...models import Array_like
 
 
 class ODENet(nn.Module, metaclass=ABCMeta):
+    """Interface for networks used to model ODE dynamics."""
+
     @abstractmethod
-    def forward(self, t, x):
+    def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        """Abstract method for ODENet forward pass."""
         pass
 
 
@@ -23,10 +26,11 @@ class WeilbachSparseLinear(nn.Module):
     See: http://proceedings.mlr.press/v108/weilbach20a/weilbach20a.pdf.
     Implementation adapted from https://github.com/plai-group/daphne.
     """
+
     _weight_mask: torch.Tensor
 
     def __init__(self, dim_in: int, dim_out: int, adj_mat: Array_like):
-        """Initializes a sparse concat squash layer as in Weilbach et al. 2020.
+        """Initialize a sparse concat squash layer as in Weilbach et al. 2020.
 
         Args:
             dim_in: Input dimension.
@@ -50,6 +54,15 @@ class WeilbachSparseLinear(nn.Module):
         self._hyper_gate = nn.Linear(1, dim_out)
 
     def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        """Compute forward pass.
+
+        Args:
+            t: Time of integration.
+            x: Data input.
+
+        Returns:
+            Predicted dynamics.
+        """
         w = torch.mul(self._weight_mask, self._weights)
         res = torch.addmm(self._bias, x, w.transpose(0, 1))
 
@@ -58,7 +71,8 @@ class WeilbachSparseLinear(nn.Module):
 
 
 class WeilbachSparseODENet(ODENet):
-    """Implements the sparse ODENet described in:
+    """Implements the sparse ODENet described below.
+
     http://proceedings.mlr.press/v108/weilbach20a/weilbach20a.pdf
 
     Code adapted from: https://github.com/plai-group/daphne.
@@ -68,6 +82,7 @@ class WeilbachSparseODENet(ODENet):
     layers are not possible, nor are hidden layers that are not the size of
     the adjacency matrix.
     """
+
     def __init__(
         self,
         input_dim: int,
@@ -75,7 +90,7 @@ class WeilbachSparseODENet(ODENet):
         act_type: str,
         adj_mat: Array_like
     ):
-        """Initializes sparse ODENet from Weilbach et al. 2020.
+        """Initialize sparse ODENet from Weilbach et al. 2020.
 
         Args:
             input_dim: Input dimension.
@@ -100,6 +115,15 @@ class WeilbachSparseODENet(ODENet):
         self.activation_fns = nn.ModuleList(activation_fns)
 
     def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        """Compute forward pass.
+
+        Args:
+            t: Time of integration.
+            x: Data input.
+
+        Returns:
+            Predicted dynamics.
+        """
         batch_dim = x.shape[0]
         dx = torch.cat([x, t * torch.ones([batch_dim, 1]).to(x)], dim=1)
 
@@ -121,8 +145,9 @@ class IgnoreLinear(nn.Module):
 
     Code copied from FFJORD: https://github.com/rtqichen/ffjord.
     """
+
     def __init__(self, dim_in: int, dim_out: int):
-        """Initializes IgnoreLinear layer.
+        """Initialize IgnoreLinear layer.
 
         Args:
             dim_in: Input dimension.
@@ -132,7 +157,15 @@ class IgnoreLinear(nn.Module):
         self._layer = nn.Linear(dim_in, dim_out)
 
     def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
-        """Currently uses an autonomous function."""
+        """Compute forward pass using dummy layer.
+
+        Args:
+            t: Time of integration, unused.
+            x: Data values.
+
+        Returns:
+            Predicted dynamics.
+        """
         return self._layer(x)
 
 
@@ -144,13 +177,14 @@ class FCODEnet(ODENet):
     Although better FFJORD ODENets exists, this fully connection layer is the
     best negative control for against the StrODENet and WeilbachSparseODENet.
     """
+
     def __init__(
         self,
         input_dim: int,
         hidden_dims: tuple[int],
         act_type: str
     ):
-        """Initializes a fully connected ODENet.
+        """Initialize a fully connected ODENet.
 
         Args:
             input_shape: Input dimension.
@@ -176,6 +210,15 @@ class FCODEnet(ODENet):
         self.activation_fns = nn.ModuleList(activation_fns[:-1])
 
     def forward(self, t: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        """Compute forward pass.
+
+        Args:
+            t: Time of integration.
+            x: Data input.
+
+        Returns:
+            Predicted dynamics.
+        """
         dx = y
         for i, layer in enumerate(self.layers):
             dx = layer(t, dx)
@@ -187,6 +230,7 @@ class FCODEnet(ODENet):
 
 class StrODENet(ODENet):
     """Wraps StrNN model for use as an ODE dynamic function."""
+
     def __init__(
         self,
         input_dim: int,
@@ -196,10 +240,15 @@ class StrODENet(ODENet):
         opt_args: dict,
         adjacency: np.ndarray
     ):
-        """Initializes StrODENet.
+        """Initialize StrODENet.
 
         Args:
             input_dim: Input dimension.
+            hidden_dim: List of StrNN hidden widths per layer.
+            activation: Activation function between layers.
+            opt_type: Factorizer used by StrNN.
+            opt_args: Arguments to pass to factorizer.
+            adjacency: Adjacency matrix.
         """
         super().__init__()
         self.net = StrNN(
@@ -214,5 +263,15 @@ class StrODENet(ODENet):
         )
 
     def forward(self, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
-        """Currently uses an autonomous function."""
+        """Compute dynamics using StrNN.
+
+        Currently uses an autonomous function.
+
+        Args:
+            t: Time of integration, unused.
+            x: Data values.
+
+        Returns:
+            Predicted dynamics.
+        """
         return self.net(x)

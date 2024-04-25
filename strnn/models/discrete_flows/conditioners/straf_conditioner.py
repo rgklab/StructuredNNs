@@ -20,7 +20,7 @@ class StrNNConditioner(Conditioner):
         opt_args: dict,
         ian_init: bool
     ):
-        """Initializes an StrNN conditioner.
+        """Initialize an StrNN conditioner.
 
         Args:
             input_dim: Dimension of input.

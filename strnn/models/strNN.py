@@ -1,121 +1,80 @@
-import os
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+import warnings
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-import warnings
-import math
 
+from strnn.factorizers import check_masks
+from strnn.factorizers import GreedyFactorizer, MADEFactorizer, ZukoFactorizer
 from strnn.models.model_utils import NONLINEARITIES
 
 
-def ian_uniform(
-        weights: torch.Tensor,
-        bias: torch.Tensor,
-        mask: torch.Tensor,
-        a: float = 0,
-        nonlinearity: str = 'leaky_relu'
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """
-    Fills the input weights with values based on Kaiming uniform initialization
-    (https://pytorch.org/docs/stable/_modules/torch/nn/init.html#kaiming_uniform_)
-    but takes into account the number of fan_ins that are masked in StrNN
-
-    :param tensor: weight tensor to be filled
-    :param mask: weight mask for this layer
-    :param
-    """
-    if torch.overrides.has_torch_function_variadic(weights):
-        return torch.overrides.handle_torch_function(
-            ian_uniform,
-            (weights,),
-            tensor=weights,
-            a=a,
-            nonlinearity=nonlinearity)
-
-    if 0 in weights.shape or 0 in bias.shape:
-        warnings.warn("In ian_uniform: weights or bias cannot be 0-dimensional!")
-        return weights, bias
-
-    # Compute fan_in based on mask
-    fan_ins = mask.sum(dim=1)
-
-    # Compute other quantities as in Kaiming uniform
-    gain = torch.nn.init.calculate_gain(nonlinearity, a)
-
-    # Update weights
-    i = 0
-    for row in weights:
-        fan_in = fan_ins[i]
-        std = gain / math.sqrt(fan_in) if fan_in > 0 else gain
-        bound = math.sqrt(3.0) * std
-
-        with torch.no_grad():
-            row.uniform_(-bound, bound)
-        i += 1
-
-    # Update bias similarly
-    i = 0
-    for b in bias:
-        fan_in = fan_ins[i]
-        bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
-        with torch.no_grad():
-            b.uniform_(-bound, bound)
-        i += 1
-
-    return weights, bias
+OPT_MAP = {
+    "greedy": GreedyFactorizer,
+    "made": MADEFactorizer,
+    "zuko": ZukoFactorizer,
+}
 
 def ian_normal() -> tuple[torch.Tensor, torch.Tensor]:
     pass
 
 class MaskedLinear(nn.Linear):
+    """Weight-masked lienar layer.
+
+    A linear neural network layer, except with a configurable binary mask
+    on the weights.
     """
-    A linear neural network layer, except with a configurable
-    binary mask on the weights
-    """
+
     mask: torch.Tensor
 
     def __init__(
             self,
             in_features: int,
             out_features: int,
-            ian_init: bool = False,
             activation: str = 'relu'
     ):
+        """Initialize MaskedLinear layer.
+
+        Args:
+            in_features: Feature dimension of input data.
+            out_features: Feature dimension of output.
+            activation: Unused.
+        """
         super().__init__(in_features, out_features)
         # register_buffer used for non-parameter variables in the model
         self.register_buffer('mask', torch.ones(out_features, in_features))
-        self.ian_init = ian_init
         self.activation = activation
 
-    def reset_parameters_w_masking(self) -> None:
-        """
-        Setting a=sqrt(5) in kaiming_uniform (thus also ian_uniform) is the
-        same as initializing with uniform(-1/sqrt(in_features), 1/sqrt(in_features)).
-        For details, see https://github.com/pytorch/pytorch/issues/57109
-        """
-        ian_uniform(
-            self.weight, self.bias, self.mask,
-            a=math.sqrt(5), nonlinearity=self.activation
-        )
-
     def set_mask(self, mask: np.ndarray):
+        """Store mask for use during forward pass.
+
+        Arg:
+            mask: Mask applied to weight matrix.
+        """
         self.mask.data.copy_(torch.from_numpy(mask.astype(np.uint8).T))
-        if self.ian_init:
-            # Reinitialize weights based on masks
-            self.reset_parameters_w_masking()
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        # * is element-wise multiplication in numpy
+        """Compute forward pass for MaskedLinear.
+
+        Applies weight mask to weight matrix to block desired connections.
+
+        Args:
+            input: Input data.
+
+        Returns:
+            MaskedLinear output.
+        """
+        # Note: * is element-wise multiplication in numpy
         return F.linear(input, self.mask * self.weight, self.bias)
 
 
 class StrNN(nn.Module):
-    """
-    Main neural network class that implements a Structured Neural Network
+    """Main neural network class that implements a Structured Neural Network.
+
     Can also become a MADE or Zuko masked NN by specifying the opt_type flag
     """
+
     def __init__(
         self,
         nin: int,
@@ -125,20 +84,19 @@ class StrNN(nn.Module):
         opt_args: dict = {'var_penalty_weight': 0.0},
         precomputed_masks: np.ndarray | None = None,
         adjacency: np.ndarray | None = None,
-        activation: str = 'relu',
-        ian_init: bool = False
+        activation: str = 'relu'
     ):
-        """
-        Initializes a Structured Neural Network (StrNN)
-        :param nin: input dimension
-        :param hidden_sizes: list of hidden layer sizes
-        :param nout: output dimension
-        :param opt_type: optimization type: greedy, zuko, MADE
-        :param opt_args: additional optimization algorithm params
-        :param precomputed_masks: previously stored masks, use directly
-        :param adjacency: the adjacency matrix, nout by nin
-        :param activation: activation function to use in this NN
-        :param ian_init: weight initialization takes the masks into account
+        """Initialize a Structured Neural Network (StrNN).
+
+        Args:
+            nin: input dimension
+            hidden_sizes: list of hidden layer sizes
+            nout: output dimension
+            opt_type: optimization type: greedy, zuko, MADE
+            opt_args: additional optimization algorithm params
+            precomputed_masks: previously stored masks, use directly
+            adjacency: the adjacency matrix, nout by nin
+            activation: activation function to use in this NN
         """
         super().__init__()
 
@@ -146,11 +104,6 @@ class StrNN(nn.Module):
         self.nin = nin
         self.hidden_sizes = hidden_sizes
         self.nout = nout
-        self.opt_type = opt_type
-        self.opt_args = opt_args
-        self.precomputed_masks = precomputed_masks
-        self.A = adjacency
-        self.ian_init = ian_init
 
         # Define activation
         try:
@@ -163,7 +116,7 @@ class StrNN(nn.Module):
         hs = [nin] + list(hidden_sizes) + [nout]  # list of all layer sizes
         for h0, h1 in zip(hs, hs[1:]):
             self.net_list.extend([
-                MaskedLinear(h0, h1, self.ian_init),
+                MaskedLinear(h0, h1),
                 self.activation
             ])
 
@@ -171,188 +124,64 @@ class StrNN(nn.Module):
         self.net_list.pop()
         self.net = nn.Sequential(*self.net_list)
 
+        # Load adjacency matrix
+        self.opt_type = opt_type.lower()
+        self.opt_args = opt_args
+
+        if adjacency is not None:
+            self.A = adjacency
+        else:
+            if self.opt_type == "made":
+                # Initialize adjacency structure to fully autoregressive
+                warnings.warn(("Adjacency matrix is unspecified, defaulting to"
+                               " fully autoregressive structure."))
+                self.A = np.tril(np.ones((nout, nin)), -1)
+            else:
+                raise ValueError(("Adjacency matrix must be specified if"
+                                  "factorizer is not MADE."))
+
+        # Setup adjacency factorizer
+        try:
+            self.factorizer = OPT_MAP[self.opt_type](self.A, self.opt_args)
+        except ValueError:
+            raise ValueError(f"{opt_type} is not a valid opt_type!")
+
+        self.precomputed_masks = precomputed_masks
+
         # Update masks
         self.update_masks()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Propagates the input forward through the StrNN network
-        :param x: input, sample_size by data_dimensions
-        :return: output, sample_size by output_dimensions
+        """Propagates the input forward through the StrNN network.
+
+        Args:
+            x: Input of size (sample_size by data_dimensions)
+        Returns:
+            Output of size (sample_size by output_dimensions)
         """
         return self.net(x)
 
     def update_masks(self):
-        """
-        :return: None
-        """
+        """Update masked linear layer masks to respect adjacency matrix."""
         if self.precomputed_masks is not None:
             # Load precomputed masks if provided
             masks = self.precomputed_masks
         else:
-            masks = self.factorize_masks()
+            masks = self.factorizer.factorize(self.hidden_sizes)
 
         self.masks = masks
-        assert self.check_masks(), "Mask check failed!"
+        assert check_masks(masks, self.A), "Mask check failed!"
 
         # For when each input produces multiple outputs
-        # e.g.: each x_i gives mean and variance for Gaussian density estimation
+        # e.g. each x_i gives mean and variance for Gaussian density estimation
         if self.nout != self.A.shape[0]:
             # Then nout should be an exact multiple of nin
             assert self.nout % self.nin == 0
             k = int(self.nout / self.nin)
             # replicate the mask across the other outputs
             masks[-1] = np.concatenate([masks[-1]] * k, axis=1)
+
         # Set the masks in all MaskedLinear layers
-        layers = [l for l in self.net.modules() if isinstance(l, MaskedLinear)]
+        layers = [m for m in self.net.modules() if isinstance(m, MaskedLinear)]
         for layer, mask in zip(layers, self.masks):
             layer.set_mask(mask)
-
-    def factorize_masks(self) -> list[np.ndarray]:
-        """
-        Factorize the given adjacency structure into per-layer masks.
-        We use a recursive approach here for efficiency and simplicity.
-        :return: list of masks in order for layers from inputs to outputs.
-        This order matches how the masks are assigned to the networks in MADE.
-        """
-        masks: list[np.ndarray] = []
-        adj_mtx = np.copy(self.A)
-
-        # TODO: We need to handle default None case (maybe init an FC layer?)
-
-        if self.opt_type == 'Zuko':
-            # Zuko creates all masks at once
-            masks = self.factorize_masks_zuko(self.hidden_sizes)
-        else:
-            # All per-layer factorization algos
-            for l in self.hidden_sizes:
-                if self.opt_type == 'greedy':
-                    (M1, M2) = self.factorize_single_mask_greedy(adj_mtx, l)
-                elif self.opt_type == 'MADE':
-                    (M1, M2) = self.factorize_single_mask_MADE(adj_mtx, l)
-                else:
-                    raise ValueError(f'{self.opt_type} is NOT an implemented optimization type!')
-
-                # Update the adjacency structure for recursive call
-                adj_mtx = M1
-                masks = masks + [M2.T]  # take transpose for size: (n_inputs x n_hidden/n_output)
-            masks = masks + [M1.T]
-
-        return masks
-
-    def factorize_single_mask_greedy(
-        self,
-        adj_mtx: np.ndarray,
-        n_hidden: int
-    ) -> (np.ndarray, np.ndarray):
-        """
-        Factorize adj_mtx into M1 * M2
-        :param adj_mtx: adjacency structure, n_outputs x n_inputs
-        :param n_hidden: number of units in this hidden layer
-        :return: masks:
-            M1 size: (n_outputs x n_hidden)
-            M2 size: (n_hidden x n_inputs)
-        """
-        # find non-zero rows and define M2
-        A_nonzero = adj_mtx[~np.all(adj_mtx == 0, axis=1), :]
-        n_nonzero_rows = A_nonzero.shape[0]
-        M2 = np.zeros((n_hidden, adj_mtx.shape[1]))
-        for i in range(n_hidden):
-            M2[i, :] = A_nonzero[i % n_nonzero_rows]
-
-        # find each row of M1
-        M1 = np.ones((adj_mtx.shape[0], n_hidden))
-        for i in range(M1.shape[0]):
-            # Find indices where A is zero on the ith row
-            Ai_zero = np.where(adj_mtx[i, :] == 0)[0]
-            # find row using closed-form solution
-            # find unique entries (rows) in j-th columns of M2 where Aij = 0
-            row_idx = np.unique(np.where(M2[:, Ai_zero] == 1)[0])
-            M1[i, row_idx] = 0.0
-
-        return M1, M2
-
-    def factorize_single_mask_MADE(self, adj_mtx: np.ndarray, n_hidden: int):
-        return None, None
-
-    def factorize_masks_zuko(
-        self,
-        hidden_sizes: tuple[int]
-    ) -> list[np.ndarray]:
-        masks = []
-
-        adj_mtx = torch.from_numpy(self.A)
-        A_prime, inv = torch.unique(adj_mtx, dim=0, return_inverse=True)
-        n_deps = A_prime.sum(dim=-1)
-        P = (A_prime @ A_prime.T == n_deps).double()
-
-        for i, h_i in enumerate((*hidden_sizes, self.nout)):
-            if i > 0:
-                # Not the first mask
-                mask = P[:, indices]
-            else:
-                # First mask: just use rows from A
-                mask = A_prime
-
-            if sum(sum(mask)) == 0.0:
-                raise ValueError("The adjacency matrix leads to a null Jacobian.")
-
-            if i < len(hidden_sizes):
-                # Still on intermediate masks
-                reachable = mask.sum(dim=-1).nonzero().squeeze(dim=-1)
-                indices = reachable[torch.arange(h_i) % len(reachable)]
-                mask = mask[indices]
-            else:
-                # We are at the last mask
-                mask = mask[inv]
-
-            # Need to transpose all masks to match other algorithms
-            masks.append(mask.T.numpy())
-
-        return masks
-
-    def check_masks(self) -> bool:
-        """
-        Given the model's masks, [M1, M2, ..., Mk],
-        check if the matrix product
-        (M1 * M2 * ... * Mk).T = Mk.T * ... * M2.T * M1.T
-        respects A's adjacency structure.
-        :return: True or False
-        """
-        mask_prod = self.masks[0]
-        for i in range(1, len(self.masks)):
-            mask_prod = mask_prod @ self.masks[i]
-        mask_prod = mask_prod.T
-
-        constraint = (mask_prod > 0.0001) * 1. - self.A
-        if np.any(constraint != 0.):
-            return False
-        else:
-            return True
-
-
-if __name__ == '__main__':
-    # TODO: Write unit tests
-    # Test StrNN model
-    try:
-        d = 3
-        A = np.ones((d, d))
-        A = np.tril(A, -1)
-
-        model = StrNN(
-            nin=d,
-            hidden_sizes=(d * 2,),
-            nout=d,
-            opt_type='greedy',
-            opt_args={'var_penalty_weight': 0.0},
-            precomputed_masks=None,
-            adjacency=A,
-            activation='relu',
-            ian_init=True
-        )
-        import pdb; pdb.set_trace()
-    except:
-        import sys, pdb, traceback
-        extype, value, tb = sys.exc_info()
-        traceback.print_exc()
-        pdb.post_mortem(tb)

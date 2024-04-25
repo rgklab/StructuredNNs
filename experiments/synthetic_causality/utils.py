@@ -1,6 +1,8 @@
 import argparse
 
+
 def dict2namespace(config):
+    """Convert dictionary to argparse namespace."""
     namespace = argparse.Namespace()
     for key, value in config.items():
         if isinstance(value, dict):

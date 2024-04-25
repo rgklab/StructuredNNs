@@ -30,6 +30,7 @@ int_times = torch.arange(0, 5, dtype=torch.float)
 
 
 def test_weilbach_lin_forward():
+    """Test dimensional correctness of WeilbachSpareLinear forward pass."""
     layer = WeilbachSparseLinear(input_dim, input_dim, torch.Tensor(A))
 
     output = layer(rand_t, rand_in)
@@ -40,6 +41,7 @@ def test_weilbach_lin_forward():
 
 
 def test_weilbach_odenet_forward():
+    """Test dimensional correctness of ODENet using WeilbachSparse dynamics."""
     odenet = WeilbachSparseODENet(input_dim, len(hidden_dim), act_type, A)
 
     output = odenet(rand_t, rand_in)
@@ -50,6 +52,7 @@ def test_weilbach_odenet_forward():
 
 
 def test_fcodenet_forward():
+    """Test dimensional correctness of a fully connected ODENet."""
     odenet = FCODEnet(input_dim, hidden_dim, act_type)
     output = odenet(rand_t, rand_in)
     assert output.shape == rand_in.shape
@@ -59,6 +62,7 @@ def test_fcodenet_forward():
 
 
 def test_strode_forward():
+    """Test dimensional correctness of an ODENet using StrNN dynamics."""
     odenet = StrODENet(
         input_dim,
         hidden_dim,

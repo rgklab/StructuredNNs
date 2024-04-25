@@ -95,7 +95,7 @@ def train_loop(
 
 
 def check_wandb_run(config: dict, wandb_name: str):
-    """Verifies if wandb run with same config already is completed.
+    """Verify if wandb run with same config already is completed.
 
     TODO: Expand function to cover more config keys.
 
@@ -132,7 +132,7 @@ def persist_wandb(
     model_state: dict,
     temp_path: str = "./wandb"
 ):
-    """Persists model state to WandB, and deletes temp artifact.
+    """Persist model state to WandB, and deletes temp artifact.
 
     Args:
         wandb_run: WandB run to log artifact to.

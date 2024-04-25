@@ -2,7 +2,7 @@ import numpy as np
 
 
 def generate_adj_mat_uniform(data_dim: int, threshold: float) -> np.ndarray:
-    """Generates adjacency matrix with uniform sparsity.
+    """Generate adjacency matrix with uniform sparsity.
 
     Args:
         data_dim: Dimension of data.

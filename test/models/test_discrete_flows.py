@@ -84,6 +84,7 @@ def test_affine_incorrect_dim():
 
 @pytest.mark.parametrize("config", all_config)
 def test_flow_init(config):
+    """Test dimensions and invertibility of autoregressive flow."""
     factory = AutoregressiveFlowFactory(config)
     flow = factory.build_flow()
     assert hasattr(flow, "config")
@@ -102,6 +103,7 @@ def test_flow_init(config):
 
 @pytest.mark.parametrize("n_steps", [3, 4])
 def test_flow_permute(n_steps):
+    """Test autoregressive flows permute latents correctly."""
     permute_config = strnn_affine_config.copy()
     permute_config[FLOW_PERMUTE] = True
     permute_config[FLOW_STEPS] = n_steps

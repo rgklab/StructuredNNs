@@ -5,16 +5,17 @@ from ....models import TTuple
 
 
 class AffineNormalizer(Normalizer):
-    """
-    Affine normalizer. Not used in main experiments due to poor expressivity.
+    """Affine normalizer.
 
     Code taken from: https://github.com/AWehenkel/Graphical-Normalizing-Flows.
     """
+
     def __init__(self):
+        """Initialize Affine Normalizer."""
         super().__init__()
 
     def forward(self, x: torch.Tensor, h: torch.Tensor) -> TTuple:
-        """Computes affine transform.
+        """Compute affine transform.
 
         Args:
             x: Input data.
@@ -31,7 +32,7 @@ class AffineNormalizer(Normalizer):
         return z, sigma
 
     def invert(self, z: torch.Tensor, h: torch.Tensor) -> torch.Tensor:
-        """Computes inverse affine transform.
+        """Compute inverse affine transform.
 
         Args:
             z: Data from latent space.

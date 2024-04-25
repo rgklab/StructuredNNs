@@ -5,6 +5,7 @@ from data.data_utils import standardize_data
 
 
 def test_split_dataset():
+    """Test train/test splitting function."""
     ratio = (0.6, 0.2, 0.2)
     data = np.ones((100, 1))
 
@@ -16,6 +17,7 @@ def test_split_dataset():
 
 
 def test_standardize_data():
+    """Test standardization function."""
     data = np.random.normal(100, 0.1, size=(5000, 1))
 
     standardized_data = standardize_data(data)

@@ -12,7 +12,7 @@ def split_dataset(
     data: np.ndarray,
     split_ratio: tuple[float, float, float]
 ) -> DSTuple:
-    """Splits data into train, validation, and test splits.
+    """Split data into train, validation, and test splits.
 
     Args:
         data: Dataset to split. Assumes first dimension is sample dimension.
@@ -29,7 +29,7 @@ def split_dataset(
 
 
 def standardize_data(data: np.ndarray):
-    """Standardizes data.
+    """Standardize data.
 
     Args:
         data: Data of dimension (n_samples, n_features).
