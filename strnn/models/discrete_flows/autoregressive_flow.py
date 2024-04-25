@@ -160,6 +160,7 @@ class AutoregressiveFlowFactory(NormalizingFlowFactory):
         if self.cond_type == "strnn":
             self.opt_type = config[OPT_TYPE]
             self.opt_args = config[OPT_ARGS]
+            self.ian_init = config[IAN_INIT]
         elif self.cond_type == "gnf":
             self.gnf_hot = config[GNF_HOT]
         elif self.cond_type == "made":
@@ -193,7 +194,8 @@ class AutoregressiveFlowFactory(NormalizingFlowFactory):
                 self.cond_act,
                 self.adj,
                 self.opt_type,
-                self.opt_args
+                self.opt_args,
+                self.ian_init
             )
         elif self.cond_type == "made":
             conditioner = MADEConditioner(
