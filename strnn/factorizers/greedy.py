@@ -4,7 +4,7 @@ from .factorizer import AdjacencyFactorizer
 
 
 class GreedyFactorizer(AdjacencyFactorizer):
-    """Implements greedy adjacency factorizor.
+    """Implements greedy adjacency factorizer.
 
     Main factorization algorithm introduced by StrNN paper.
 

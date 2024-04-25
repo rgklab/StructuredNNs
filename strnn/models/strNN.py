@@ -6,12 +6,14 @@ import torch.nn.functional as F
 import numpy as np
 
 from strnn.factorizers import check_masks
-from strnn.factorizers import GreedyFactorizer, MADEFactorizer, ZukoFactorizer
+from strnn.factorizers import GreedyFactorizer, GreedyParallelFactorizer
+from strnn.factorizers import MADEFactorizer, ZukoFactorizer
 from strnn.models.model_utils import NONLINEARITIES
 
 
 OPT_MAP = {
     "greedy": GreedyFactorizer,
+    "greedy_parallel": GreedyParallelFactorizer,
     "made": MADEFactorizer,
     "zuko": ZukoFactorizer,
 }
@@ -30,7 +32,7 @@ class MaskedLinear(nn.Linear):
             self,
             in_features: int,
             out_features: int,
-            activation: str = 'relu'
+            activation: str = "relu"
     ):
         """Initialize MaskedLinear layer.
 
@@ -41,7 +43,7 @@ class MaskedLinear(nn.Linear):
         """
         super().__init__(in_features, out_features)
         # register_buffer used for non-parameter variables in the model
-        self.register_buffer('mask', torch.ones(out_features, in_features))
+        self.register_buffer("mask", torch.ones(out_features, in_features))
         self.activation = activation
 
     def set_mask(self, mask: np.ndarray):
@@ -78,11 +80,11 @@ class StrNN(nn.Module):
         nin: int,
         hidden_sizes: tuple[int, ...],
         nout: int,
-        opt_type: str = 'greedy',
-        opt_args: dict = {'var_penalty_weight': 0.0},
+        opt_type: str = "greedy",
+        opt_args: dict = {"var_penalty_weight": 0.0},
         precomputed_masks: np.ndarray | None = None,
         adjacency: np.ndarray | None = None,
-        activation: str = 'relu'
+        activation: str = "relu"
     ):
         """Initialize a Structured Neural Network (StrNN).
 
@@ -136,7 +138,7 @@ class StrNN(nn.Module):
                 self.A = np.tril(np.ones((nout, nin)), -1)
             else:
                 raise ValueError(("Adjacency matrix must be specified if"
-                                  "factorizer is not MADE."))
+                                  " factorizer is not MADE."))
 
         # Setup adjacency factorizer
         try:
