@@ -9,7 +9,7 @@ import numpy as np
 from strnn.factorizers import check_masks, GreedyFactorizer, \
     GreedyParallelFactorizer, MADEFactorizer, ZukoFactorizer
 from strnn.models.model_utils import NONLINEARITIES
-from adpativeLayerNorm import AdaptiveLayerNorm
+from strnn.models.adaptive_layer_norm import AdaptiveLayerNorm
 
 
 OPT_MAP = {
@@ -94,10 +94,10 @@ class MaskedLinear(nn.Linear):
     ):
         """Initialize MaskedLinear layer.
 
-        Args:
-            in_features: Feature dimension of input data.
-            out_features: Feature dimension of output.
-            activation: Unused.
+        :param in_features: Feature dimension of input data.
+        :param out_features: Feature dimension of output.
+        :param activation: Activation function to use in this layer (for calculating gains
+            in initialization).
         """
         super().__init__(in_features, out_features)
         # register_buffer used for non-parameter variables in the model
@@ -182,7 +182,8 @@ class StrNN(nn.Module):
         adjacency: np.ndarray | None = None,
         activation: str = "relu",
         init_type: str = 'ian_uniform',
-        norm_type: str | None = None
+        norm_type: str | None = None,
+        gamma: float | None = None
     ):
         """Initialize a Structured Neural Network (StrNN).
 
@@ -195,6 +196,7 @@ class StrNN(nn.Module):
             precomputed_masks: previously stored masks, use directly
             adjacency: the adjacency matrix, nout by nin
             activation: activation function to use in this NN
+            gamma: temperature parameter for adaptive layer normalization
         """
         super().__init__()
 
@@ -212,6 +214,7 @@ class StrNN(nn.Module):
         # Set up initialization and normalization schemes
         self.init_type = init_type
         self.norm_type = norm_type
+        self.gamma = gamma
 
         # Define StrNN network
         self.net_list = []
@@ -227,7 +230,7 @@ class StrNN(nn.Module):
             elif norm_type == 'batch':
                 self.net_list.append(nn.BatchNorm1d(h1))
             elif norm_type == 'adaptive_layer':
-                pass
+                self.net_list.append(AdaptiveLayerNorm(self.gamma))
             else:
                 if norm_type is not None:
                     raise ValueError(f"Invalid normalization type: {norm_type}")
@@ -299,10 +302,17 @@ class StrNN(nn.Module):
 
         # Set the masks in all MaskedLinear layers
         mask_idx = 0
+        
+        mask_so_far = self.masks[0].T
         for layer in self.net:
             if isinstance(layer, MaskedLinear):
                 layer.set_mask(self.masks[mask_idx])
+                if mask_idx > 0:
+                    mask_so_far = self.masks[mask_idx].T @ mask_so_far
                 mask_idx += 1
+            elif isinstance(layer, AdaptiveLayerNorm):
+                layer.set_norm_weights(mask_so_far)
+
 
 
 if __name__ == '__main__':
@@ -312,6 +322,7 @@ if __name__ == '__main__':
         [0, 0, 0, 0],
         [0, 1, 1, 0]
     ])
+    # adj_mtx = np.ones((4, 4))
 
     model = StrNN(
         nin=4,
@@ -319,7 +330,9 @@ if __name__ == '__main__':
         nout=4,
         opt_type="greedy",
         adjacency=adj_mtx,
-        init_type='ian_uniform'
+        init_type='ian_uniform',
+        norm_type='adaptive_layer',
+        gamma=1.0
     )
 
     print(model.masks)

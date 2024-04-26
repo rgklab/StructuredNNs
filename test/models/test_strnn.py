@@ -78,21 +78,35 @@ made_mask_2 = np.array([
     [0, 1, 1, 1]
 ])
 
+all_ones_adjacency = np.ones((4, 4))
+
 
 def test_strnn_empty_adjacency():
-    """Test scenario where non-MADE factorization is used with adjacency."""
+    """ 
+    Test scenario where non-MADE factorization is used with adjacency.
+    """
     with pytest.raises(ValueError):
         StrNN(4, [4, 4], 4, opt_type="greedy", adjacency=None)
 
 
 def test_strnn_empty_adjacency_made():
-    """Test scenario where no adjacency is passed but opt_type is MADE.
-
+    """
+    Test scenario where no adjacency is passed but opt_type is MADE.
     Adjacency should default to fully lower triangular.
     """
     strnn = StrNN(4, [4, 4], 4, opt_type="MADE", adjacency=None)
 
     assert np.all(strnn.A == np.tril(np.ones((4, 4)), -1))
+    
+
+def test_strnn_all_ones_adjacency():
+    """ 
+    Test scenario where the adjacency is all ones, so the network is
+    fully conencted. All the masks in the StrNN should also be all ones.
+    """
+    strnn = StrNN(4, [6, 8, 6], 4, opt_type='greedy', adjacency=all_ones_adjacency)
+    for mask in strnn.masks:
+        assert np.all(mask == 1)
 
 
 def test_strnn_precomputed_erroneous():
