@@ -196,6 +196,8 @@ class StrNN(nn.Module):
             precomputed_masks: previously stored masks, use directly
             adjacency: the adjacency matrix, nout by nin
             activation: activation function to use in this NN
+            init_type: initialization scheme for weights
+            norm_type: normalization type: layer, batch, adaptive_layer
             gamma: temperature parameter for adaptive layer normalization
         """
         super().__init__()

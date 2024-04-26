@@ -13,19 +13,31 @@ SUPPORTED_DATA_TYPES = ['binary', 'gaussian']
 
 class StrNNDensityEstimator(StrNN):
     def __init__(self,
-         nin: int,
-         hidden_sizes: tuple[int, ...],
-         nout: int,
-         opt_type: str = 'greedy',
-         opt_args: dict = {'var_penalty_weight': 0.0},
-         precomputed_masks: np.ndarray | None = None,
-         adjacency: np.ndarray | None = None,
-         activation: str = 'relu',
-         data_type: str = 'binary'
+        nin: int,
+        hidden_sizes: tuple[int, ...],
+        nout: int,
+        opt_type: str = 'greedy',
+        opt_args: dict = {'var_penalty_weight': 0.0},
+        precomputed_masks: np.ndarray | None = None,
+        adjacency: np.ndarray | None = None,
+        activation: str = 'relu',
+        data_type: str = 'binary',
+        init_type: str = 'ian_uniform',
+        norm_type: str | None = None,
+        gamma: float | None = None
     ):
+        """
+        Initialize a StrNNDensityEstimator for closed-form density estimation tasks
+        
+        Args:
+            init_type: initialization scheme for weights
+            norm_type: normalization type: layer, batch, adaptive_layer
+            gamma: temperature parameter for adaptive layer normalization
+        """
         super().__init__(
             nin, hidden_sizes, nout, opt_type, opt_args,
-            precomputed_masks, adjacency, activation
+            precomputed_masks, adjacency, activation,
+            init_type, norm_type, gamma
         )
         assert data_type in SUPPORTED_DATA_TYPES
         self.data_type = data_type
