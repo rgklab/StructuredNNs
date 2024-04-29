@@ -36,6 +36,83 @@ binary_every_other_d15_n2000_MADE_best: &binary_every_other_d15_n2000_MADE_best
   opt_type: "MADE"
   optimizer: "adamw"
 
+binary_random_very_sparse_d15_3_n2000_StrNN_best: &binary_random_very_sparse_d15_3_n2000_StrNN_best
+  dataset_name: "binary_random_verysparse_d15_n2000"
+  adj_mtx_name: "random_verysparse_d15_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+
+binary_random_sparse_d15_3_n2000_StrNN_best: &binary_random_sparse_d15_3_n2000_StrNN_best
+  dataset_name: "binary_random_sparse_d15_n2000"
+  adj_mtx_name: "random_sparse_d15_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_dense_d15_3_n2000_StrNN_best: &binary_random_dense_d15_3_n2000_StrNN_best
+  dataset_name: "binary_random_dense_d15_n2000"
+  adj_mtx_name: "random_dense_d15_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_medium_d15_3_n2000_StrNN_best: &binary_random_medium_d15_3_n2000_StrNN_best
+  dataset_name: "binary_random_medium_d15_n2000"
+  adj_mtx_name: "random_medium_d15_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
 binary_random_sparse_d15_n2000_StrNN_best: &binary_random_sparse_d15_n2000_StrNN_best
   dataset_name: "binary_random_sparse_d15_n2000"
   adj_mtx_name: "random_sparse_d15_adj"
@@ -51,6 +128,575 @@ binary_random_sparse_d15_n2000_StrNN_best: &binary_random_sparse_d15_n2000_StrNN
   weight_decay: 0.001
   patience: 10
   max_epochs: 5000
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_very_sparse_d15_n2000_StrNN_best: &binary_random_very_sparse_d15_n2000_StrNN_best
+  dataset_name: "binary_random_verysparse_d15_n2000"
+  adj_mtx_name: "random_verysparse_d15_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  hidden_size_multiplier_6: 6
+  hidden_size_multiplier_7: 5
+  hidden_size_multiplier_8: 4
+  hidden_size_multiplier_9: 5
+  num_hidden_layers: 1
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_medium_d15_n2000_StrNN_best: &binary_random_medium_d15_n2000_StrNN_best
+  dataset_name: "binary_random_medium_d15_n2000"
+  adj_mtx_name: "random_medium_d15_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 1
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_dense_d15_n2000_StrNN_best: &binary_random_dense_d15_n2000_StrNN_best
+  dataset_name: "binary_random_dense_d15_n2000"
+  adj_mtx_name: "random_dense_d15_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 1
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_very_sparse_d200_n2000_StrNN_best: &binary_random_very_sparse_d200_n2000_StrNN_best
+  dataset_name: "binary_random_verysparse_d200_n2000"
+  adj_mtx_name: "random_verysparse_d200_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_very_sparse_d500_n2000_StrNN_best: &binary_random_very_sparse_d500_n2000_StrNN_best
+  dataset_name: "binary_random_verysparse_d500_n2000"
+  adj_mtx_name: "random_verysparse_d500_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_sparse_d500_n2000_StrNN_best: &binary_random_sparse_d500_n2000_StrNN_best
+  dataset_name: "binary_random_sparse_d500_n2000"
+  adj_mtx_name: "random_sparse_d500_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_medium_d500_n2000_StrNN_best: &binary_random_medium_d500_n2000_StrNN_best
+  dataset_name: "binary_random_medium_d500_n2000"
+  adj_mtx_name: "random_medium_d500_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_dense_d500_n2000_StrNN_best: &binary_random_dense_d500_n2000_StrNN_best
+  dataset_name: "binary_random_dense_d500_n2000"
+  adj_mtx_name: "random_dense_d500_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_very_sparse_d1000_n2000_StrNN_best: &binary_random_very_sparse_d1000_n2000_StrNN_best
+  dataset_name: "binary_random_verysparse_d1000_n2000"
+  adj_mtx_name: "random_verysparse_d1000_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_sparse_d1000_n2000_StrNN_best: &binary_random_sparse_d1000_n2000_StrNN_best
+  dataset_name: "binary_random_sparse_d1000_n2000"
+  adj_mtx_name: "random_sparse_d1000_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_medium_d1000_n2000_StrNN_best: &binary_random_medium_d1000_n2000_StrNN_best
+  dataset_name: "binary_random_medium_d1000_n2000"
+  adj_mtx_name: "random_medium_d1000_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_dense_d1000_n2000_StrNN_best: &binary_random_dense_d1000_n2000_StrNN_best
+  dataset_name: "binary_random_dense_d1000_n2000"
+  adj_mtx_name: "random_dense_d1000_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_full_ones_d100_n2000_StrNN_best: &binary_full_ones_d100_n2000_StrNN_best
+  dataset_name: "binary_full_ones_d100_n2000"
+  adj_mtx_name: "full_ones_adj_mtx_100"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 5
+  hidden_size_multiplier_2: 5
+  hidden_size_multiplier_3: 5
+  hidden_size_multiplier_4: 5
+  hidden_size_multiplier_5: 5
+  hidden_size_multiplier_6: 5
+  hidden_size_multiplier_7: 5
+  hidden_size_multiplier_8: 5
+  hidden_size_multiplier_9: 5
+  hidden_size_multiplier_10: 5
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_medium_sparse_d100_n2000_StrNN_best: &binary_random_medium_sparse_d100_n2000_StrNN_best
+  dataset_name: "binary_random_mediumsparse_d100_n2000"
+  adj_mtx_name: "medium_sparse_adj_mtx_100"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 5
+  hidden_size_multiplier_2: 5
+  hidden_size_multiplier_3: 5
+  hidden_size_multiplier_4: 5
+  hidden_size_multiplier_5: 5
+  hidden_size_multiplier_6: 5
+  hidden_size_multiplier_7: 5
+  hidden_size_multiplier_8: 5
+  hidden_size_multiplier_9: 5
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+
+citeseer_strnn_experiment: &citeseer_strnn_experiment
+  dataset_name: "CiteSeer"
+  adj_mtx_name: "None"  # Assuming you're creating the adjacency matrix in the script
+  activation: "relu"
+  epsilon: 1e-8
+  hidden_size_multiplier_1: 2
+  hidden_size_multiplier_2: 2
+  hidden_size_multiplier_3: 2
+  hidden_size_multiplier_4: 2
+  hidden_size_multiplier_5: 2
+  hidden_size_multiplier_6: 2
+  hidden_size_multiplier_7: 2
+  num_hidden_layers: 3
+  learning_rate: 0.01
+  weight_decay: 5e-4
+  patience: 10
+  max_epochs: 300
+  batch_size: 1  # Not used in this context but required by the config structure
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+
+binary_random_mid_dense_d100_n2000_StrNN_best: &binary_random_mid_dense_d100_n2000_StrNN_best
+  dataset_name: "binary_random_middense_d100_n2000"
+  adj_mtx_name: "mid_dense_adj_mtx_100"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 5
+  hidden_size_multiplier_2: 5
+  hidden_size_multiplier_3: 5
+  hidden_size_multiplier_4: 5
+  hidden_size_multiplier_5: 5
+  hidden_size_multiplier_6: 5
+  hidden_size_multiplier_7: 5
+  hidden_size_multiplier_8: 5
+  hidden_size_multiplier_9: 5
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_full_auto_d100_n2000_StrNN_best: &binary_full_auto_d100_n2000_StrNN_best
+  dataset_name: "binary_full_auto_d100_n2000"
+  adj_mtx_name: "full_auto_adj_mtx_100"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 5
+  hidden_size_multiplier_2: 5
+  hidden_size_multiplier_3: 5
+  hidden_size_multiplier_4: 5
+  hidden_size_multiplier_5: 5
+  hidden_size_multiplier_6: 5
+  hidden_size_multiplier_7: 5
+  hidden_size_multiplier_8: 5
+  hidden_size_multiplier_9: 5
+  hidden_size_multiplier_10: 5
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_very_sparse_d100_n2000_StrNN_best: &binary_random_very_sparse_d100_n2000_StrNN_best
+  dataset_name: "binary_random_verysparse_d100_n2000"
+  adj_mtx_name: "random_verysparse_d100_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 5
+  hidden_size_multiplier_2: 5
+  hidden_size_multiplier_3: 5
+  hidden_size_multiplier_4: 5
+  hidden_size_multiplier_5: 5
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_sparse_d100_n2000_StrNN_best: &binary_random_sparse_d100_n2000_StrNN_best
+  dataset_name: "binary_random_sparse_d100_n2000"
+  adj_mtx_name: "random_sparse_d100_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 5
+  hidden_size_multiplier_2: 5
+  hidden_size_multiplier_3: 5
+  hidden_size_multiplier_4: 5
+  hidden_size_multiplier_5: 5
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_medium_d100_n2000_StrNN_best: &binary_random_medium_d100_n2000_StrNN_best
+  dataset_name: "binary_random_medium_d100_n2000"
+  adj_mtx_name: "random_medium_d100_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 5
+  hidden_size_multiplier_2: 5
+  hidden_size_multiplier_3: 5
+  hidden_size_multiplier_4: 5
+  hidden_size_multiplier_5: 5
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+
+binary_random_dense_d100_n2000_StrNN_best: &binary_random_dense_d100_n2000_StrNN_best
+  dataset_name: "binary_random_dense_d100_n2000"
+  adj_mtx_name: "random_dense_d100_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 5
+  hidden_size_multiplier_2: 5
+  hidden_size_multiplier_3: 5
+  hidden_size_multiplier_4: 5
+  hidden_size_multiplier_5: 5
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_sparse_d200_n2000_StrNN_best: &binary_random_sparse_d200_n2000_StrNN_best
+  dataset_name: "binary_random_sparse_d200_n2000"
+  adj_mtx_name: "random_sparse_d200_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 5
+  hidden_size_multiplier_2: 5
+  hidden_size_multiplier_3: 5
+  hidden_size_multiplier_4: 5
+  hidden_size_multiplier_5: 5
+  hidden_size_multiplier_6: 5
+  hidden_size_multiplier_7: 5
+  hidden_size_multiplier_8: 5
+  hidden_size_multiplier_9: 5
+  hidden_size_multiplier_10: 5
+  num_hidden_layers: 1
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_sparse_d28_n2000_StrNN_best: &binary_random_sparse_d28_n2000_StrNN_best
+  dataset_name: "binary_random_sparse_d28_n2000"
+  adj_mtx_name: "random_sparse_d28_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 5
+  hidden_size_multiplier_2: 5
+  hidden_size_multiplier_3: 5
+  hidden_size_multiplier_4: 5
+  hidden_size_multiplier_5: 5
+  hidden_size_multiplier_6: 5
+  hidden_size_multiplier_7: 5
+  hidden_size_multiplier_8: 5
+  hidden_size_multiplier_9: 5
+  hidden_size_multiplier_10: 5
+  num_hidden_layers: 1
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_medium_d200_n2000_StrNN_best: &binary_random_medium_d200_n2000_StrNN_best
+  dataset_name: "binary_random_medium_d200_n2000"
+  adj_mtx_name: "random_medium_d200_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_random_dense_d200_n2000_StrNN_best: &binary_random_dense_d200_n2000_StrNN_best
+  dataset_name: "binary_random_dense_d200_n2000"
+  adj_mtx_name: "random_dense_d200_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 3
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_d28_n2000_StrNN_best: &binary_d28_n2000_StrNN_best
+  dataset_name: "binary_prev_5_d30_n2000"
+  adj_mtx_name: "prev_5_d30_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 1
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+mnist_random_sparse_d28_n2000_StrNN_best: &mnist_random_sparse_d28_n2000_StrNN_best
+  dataset_name: "mnist_sample_2000"
+  adj_mtx_name: "28_nbr10_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 1
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+
+binary_mnist_d30_n2000_StrNN_best: &binary_mnist_d30_n2000_StrNN_best
+  dataset_name: "binary_random_sparse_d30_n2000"
+  adj_mtx_name: "d28_nbr16_adj"
+  activation: "relu"
+  epsilon: 1
+  hidden_size_multiplier_1: 4
+  hidden_size_multiplier_2: 8
+  hidden_size_multiplier_3: 1
+  hidden_size_multiplier_4: 12
+  hidden_size_multiplier_5: 8
+  num_hidden_layers: 1
+  learning_rate: 0.1
+  weight_decay: 0.001
+  patience: 10
+  max_epochs: 500
   batch_size: 200
   opt_type: "greedy"
   optimizer: "adamw"
