@@ -130,4 +130,4 @@ if __name__ == "__main__":
         sweep_id = args.sweep_id
 
         # Run wandb agent
-        wandb.agent(sweep_id, project=args.project, function=main, count=10)
+        wandb.agent(sweep_id, project=args.project, function=main, count=50)
