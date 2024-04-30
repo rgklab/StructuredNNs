@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def load_data_and_adj_mtx(dataset_name, adj_mtx_name):
+def load_data_and_adj_mtx(dataset_name, adj_mtx_name, load_test=False):
     """
     Load train and val splits of specified data and
     associated adjacency matrix
@@ -30,6 +30,12 @@ def load_data_and_adj_mtx(dataset_name, adj_mtx_name):
     val_data = data['valid_data'].astype(np.float32)
     train_data = torch.from_numpy(train_data).to(device)
     val_data = torch.from_numpy(val_data).to(device)
+
+    # Load test data if available
+    if load_test:
+        test_data = data['test_data'].astype(np.float32)
+        test_data = torch.from_numpy(test_data).to(device)
+        return train_data, val_data, test_data, adj_mtx
 
     return train_data, val_data, adj_mtx
 

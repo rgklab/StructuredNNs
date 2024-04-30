@@ -5,18 +5,22 @@ from torch.nn.functional import softmax
 
 
 class AdaptiveLayerNorm(nn.Module):
-    def __init__(self, gamma, eps=1e-5):
+    def __init__(self, gamma, wp, eps=1e-5):
         """
         Args:
-            gamma (float)
+            gamma (float) min: 0.0, max: 1.0
                 Temperature variable in standard softmax function.
                 High temperature -> smoothing effect
                 Low temperature -> basically argmax: the nodes with more incoming
                     connections are more favoured.
+            wp (float) min: 0.0, max: 1.0
+                Weight parameter that determines how much the activations are 
+                reweighted based on numbers of connections.
         """
         super().__init__()
         self.eps = eps
         self.gamma = gamma
+        self.wp = wp
         self.norm_weights = None
 
     def set_norm_weights(self, mask_so_far):
@@ -41,7 +45,8 @@ class AdaptiveLayerNorm(nn.Module):
         
         # Reweight by number of connections if necessary
         if self.norm_weights is not None:
-            y = y * self.norm_weights
+            self.norm_weights = self.norm_weights.to(y.device)
+            y =  self.wp * y * self.norm_weights + (1 - self.wp) * y
         return y
     
 

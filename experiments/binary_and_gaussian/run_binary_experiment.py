@@ -76,7 +76,11 @@ def main():
         precomputed_masks=None,
         adjacency=adj_mtx,
         activation=experiment_config["activation"],
-        data_type=data_type
+        data_type=data_type,
+        init_type=experiment_config["init_type"],
+        norm_type=experiment_config["norm_type"],
+        gamma=experiment_config["gamma"],
+        wp=experiment_config["wp"]
     )
     model.to(device)
 

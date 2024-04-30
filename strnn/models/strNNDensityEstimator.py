@@ -24,7 +24,8 @@ class StrNNDensityEstimator(StrNN):
         data_type: str = 'binary',
         init_type: str = 'ian_uniform',
         norm_type: str | None = None,
-        gamma: float | None = None
+        gamma: float | None = None,
+        wp: float | None = None
     ):
         """
         Initialize a StrNNDensityEstimator for closed-form density estimation tasks
@@ -37,7 +38,7 @@ class StrNNDensityEstimator(StrNN):
         super().__init__(
             nin, hidden_sizes, nout, opt_type, opt_args,
             precomputed_masks, adjacency, activation,
-            init_type, norm_type, gamma
+            init_type, norm_type, gamma, wp
         )
         assert data_type in SUPPORTED_DATA_TYPES
         self.data_type = data_type
@@ -57,9 +58,9 @@ class StrNNDensityEstimator(StrNN):
         return ll, z
 
     def get_preds_loss(self, batch):
+        assert self.data_type in SUPPORTED_DATA_TYPES
         x = batch
         x_hat = self(x)
-        assert self.data_type in SUPPORTED_DATA_TYPES
 
         if self.data_type == 'binary':
             # Evaluate the binary cross entropy loss

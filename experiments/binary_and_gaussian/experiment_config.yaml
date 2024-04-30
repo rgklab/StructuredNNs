@@ -111,3 +111,72 @@ gaussian_prev_2_d20_n5000_MADE_best: &gaussian_prev_2_d20_n5000_MADE_best
   batch_size: 200
   opt_type: "MADE"
   optimizer: "adamw"
+
+
+binary_every_other_d15_n2000_StrNN_no_norm: &binary_every_other_d15_n2000_StrNN_no_norm
+  dataset_name: "binary_every_other_d15_n2000"
+  adj_mtx_name: "every_other_d15_adj"
+  activation: "relu"
+  epsilon: 0.01
+  hidden_size_multiplier_1: 6
+  hidden_size_multiplier_2: 6
+  hidden_size_multiplier_3: 6
+  hidden_size_multiplier_4: 6
+  hidden_size_multiplier_5: 6
+  num_hidden_layers: 1
+  learning_rate: 0.001
+  weight_decay: 0.05
+  patience: 10
+  max_epochs: 5000
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+  init_type: "ian_normal"
+  norm_type: Null
+  gamma: Null
+
+
+binary_every_other_d15_n2000_StrNN_layer_norm: &binary_every_other_d15_n2000_StrNN_layer_norm
+  dataset_name: "binary_every_other_d15_n2000"
+  adj_mtx_name: "every_other_d15_adj"
+  activation: "relu"
+  epsilon: 0.01
+  hidden_size_multiplier_1: 6
+  hidden_size_multiplier_2: 6
+  hidden_size_multiplier_3: 6
+  hidden_size_multiplier_4: 6
+  hidden_size_multiplier_5: 6
+  num_hidden_layers: 1
+  learning_rate: 0.001
+  weight_decay: 0.05
+  patience: 10
+  max_epochs: 5000
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+  init_type: "ian_normal"
+  norm_type: "layer"
+  gamma: None
+
+binary_every_other_d15_n2000_StrNN_adapt_layer_norm: &binary_every_other_d15_n2000_StrNN_adapt_layer_norm
+  dataset_name: "binary_every_other_d15_n2000"
+  adj_mtx_name: "every_other_d15_adj"
+  activation: "relu"
+  epsilon: 0.01
+  hidden_size_multiplier_1: 6
+  hidden_size_multiplier_2: 6
+  hidden_size_multiplier_3: 6
+  hidden_size_multiplier_4: 6
+  hidden_size_multiplier_5: 6
+  num_hidden_layers: 1
+  learning_rate: 0.001
+  weight_decay: 0.05
+  patience: 10
+  max_epochs: 5000
+  batch_size: 200
+  opt_type: "greedy"
+  optimizer: "adamw"
+  init_type: "ian_normal"
+  norm_type: "adaptive_layer"
+  gamma: 0.5
+  wp: 0.5

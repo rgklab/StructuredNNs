@@ -183,7 +183,8 @@ class StrNN(nn.Module):
         activation: str = "relu",
         init_type: str = 'ian_uniform',
         norm_type: str | None = None,
-        gamma: float | None = None
+        gamma: float | None = None,
+        wp: float | None = None
     ):
         """Initialize a Structured Neural Network (StrNN).
 
@@ -199,6 +200,7 @@ class StrNN(nn.Module):
             init_type: initialization scheme for weights
             norm_type: normalization type: layer, batch, adaptive_layer
             gamma: temperature parameter for adaptive layer normalization
+            wp: weight parameter for adaptive layer normalization
         """
         super().__init__()
 
@@ -217,6 +219,7 @@ class StrNN(nn.Module):
         self.init_type = init_type
         self.norm_type = norm_type
         self.gamma = gamma
+        self.wp = wp
 
         # Define StrNN network
         self.net_list = []
@@ -232,7 +235,7 @@ class StrNN(nn.Module):
             elif norm_type == 'batch':
                 self.net_list.append(nn.BatchNorm1d(h1))
             elif norm_type == 'adaptive_layer':
-                self.net_list.append(AdaptiveLayerNorm(self.gamma))
+                self.net_list.append(AdaptiveLayerNorm(self.gamma, self.wp))
             else:
                 if norm_type is not None:
                     raise ValueError(f"Invalid normalization type: {norm_type}")
