@@ -14,22 +14,42 @@ MAX_EPOCHS = 5000
 PATIENCE = 20
 
 
-def start_sweep(project, sweep_name):
-    sweep_configuration = {
-        'method': 'random',
-        'name': sweep_name,
-        'metric': {'goal': 'maximize', 'name': 'val_loss'},
-        'parameters': {
-            'lr': {'max': 0.1, 'min': 0.001},
-            'weight_decay': {'values': [0.1, 0.01, 0.001]},
-            'epsilon': {'values': [1e-8, 1e-5, 1e-2, 1e-1]},
-            'batch_size': {'values': [100, 200, 400]},
-            'gamma': {'values': [0.1, 0.25, 0.5, 0.75, 1.0]},
-            'wp': {'values': [0, 0.25, 0.5, 0.75, 1.0]},
-            'num_hidden_layers': {'values': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
-            'hidden_size_multiplier': {'values': [1, 2, 3, 4, 5, 6]},
+def start_sweep(project, sweep_name, regular=False):
+    if regular:
+        assert "regular" in sweep_name, \
+            "Sweep name must contain 'regular' if regular is True."
+        sweep_configuration = {
+            'method': 'random',
+            'name': sweep_name,
+            'metric': {'goal': 'maximize', 'name': 'val_loss'},
+            'parameters': {
+                'lr': {'values': [0.1, 0.001, 0.0001, 0.0001, 0.00001]},
+                'weight_decay': {'values': [0.1, 0.01, 0.001]},
+                'epsilon': {'values': [1e-8, 1e-5, 1e-2, 1e-1]},
+                'batch_size': {'values': [100, 200, 400]},
+                'num_hidden_layers': {'values': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+                'hidden_size_multiplier': {'values': [1, 2, 3, 4, 5, 6]},
+            }
         }
-    }
+    else:
+        sweep_configuration = {
+            'method': 'random',
+            'name': sweep_name,
+            'metric': {'goal': 'maximize', 'name': 'val_loss'},
+            'parameters': {
+                'lr': {'values': [0.1, 0.001, 0.0001, 0.0001, 0.00001]},
+                'weight_decay': {'values': [0.1, 0.01, 0.001]},
+                'epsilon': {'values': [1e-8, 1e-5, 1e-2, 1e-1]},
+                'batch_size': {'values': [100, 200, 400]},
+                'init_gamma': {'values': [0.1, 0.5, 0.7, 0.8, 0.9, 1.0]},
+                # 'min_gamma': {'values': [0.01, 0.05, 0.1, 0.2, 0.5]},
+                'max_gamma': {'values': [1.0, 2.0, 5.0, 10.0]},
+                'anneal_rate': {'values': [0.00001, 0.0001, 0.001, 0.01, 0.1]},
+                'anneal_method': {'values': ['linear', 'exponential']},
+                'num_hidden_layers': {'values': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+                'hidden_size_multiplier': {'values': [1, 2, 3, 4, 5, 6]},
+            }
+        }
 
     sweep_id = wandb.sweep(sweep=sweep_configuration, project=project)
     wandb.agent(sweep_id, project=project, function=main, count=1)
@@ -46,8 +66,12 @@ def main():
     weight_decay = wandb.config.weight_decay
     epsilon = wandb.config.epsilon
     batch_size = wandb.config.batch_size
-    gamma = wandb.config.gamma
-    wp = wandb.config.wp
+    init_gamma = wandb.config.init_gamma
+    # min_gamma = wandb.config.min_gamma
+    max_gamma = wandb.config.max_gamma
+    anneal_rate = wandb.config.anneal_rate
+    anneal_method = wandb.config.anneal_method
+    # wp = wandb.config.wp
     num_hidden_layers = wandb.config.num_hidden_layers
     hidden_size_multiplier = wandb.config.hidden_size_multiplier
 
@@ -79,22 +103,56 @@ def main():
     else:
         raise ValueError("Data type must be binary or Gaussian!")
 
-    # Initialize model
-    model = StrNNDensityEstimator(
-        nin=input_size,
-        hidden_sizes=hidden_sizes,
-        nout=input_size,
-        opt_type="greedy",
-        precomputed_masks=None,
-        adjacency=adj_mtx,
-        activation="relu",
-        data_type=data_type,
-        init_type="ian_normal",
-        norm_type="adaptive_layer",
-        gamma=gamma,
-        wp=wp
-    )
+    # Initialize model settings
+    init_type = 'ian_normal'
+    opt_type = 'greedy'
+    activation = 'relu'
+
+    if args.regular:
+        # Run with regular layer norm
+        norm_type = 'layer'
+        model = StrNNDensityEstimator(
+            nin=input_size,
+            hidden_sizes=hidden_sizes,
+            nout=input_size,
+            opt_type=opt_type,
+            precomputed_masks=None,
+            adjacency=adj_mtx,
+            activation=activation,
+            data_type=data_type,
+            init_type=init_type,
+            norm_type=norm_type
+        )
+    else:
+        norm_type = 'adaptive_layer'
+        model = StrNNDensityEstimator(
+            nin=input_size,
+            hidden_sizes=hidden_sizes,
+            nout=input_size,
+            opt_type=opt_type,
+            precomputed_masks=None,
+            adjacency=adj_mtx,
+            activation=activation,
+            data_type=data_type,
+            init_type=init_type,
+            norm_type=norm_type,
+            init_gamma=init_gamma,
+            # min_gamma=min_gamma,
+            max_gamma=max_gamma,
+            anneal_rate=anneal_rate,
+            anneal_method=anneal_method,
+            # wp=wp
+        )
     model.to(device)
+    # Log init_type, opt_type, activation, norm_type, and data settings
+    wandb.log({
+        "init_type": init_type,
+        "opt_type": opt_type,
+        "activation": activation,
+        "norm_type": norm_type,
+        "data_path": args.data_path,
+        "adj_path": args.adj_path,
+    })
     print("Initialized model.")
 
     # Intialize optimizer
@@ -120,14 +178,21 @@ if __name__ == "__main__":
     parser.add_argument("--project", type=str, default=None)
     parser.add_argument("--sweep_name", type=str, default=None)
     parser.add_argument("--model_seed", type=int, default=42)
+    parser.add_argument("--regular", type=int, default=0)
     args = parser.parse_args()
     
     if args.sweep_id is None:
-        # Start new sweep
-        sweep_id = start_sweep(args.project, args.sweep_name)
-        print(f"Started {args.sweep_name} with id {sweep_id}.")
+        try:
+            # Start new sweep
+            sweep_id = start_sweep(args.project, args.sweep_name)
+            print(f"Started {args.sweep_name} with id {sweep_id}.")
+        except:
+            import sys, pdb, traceback
+            extype, value, tb = sys.exc_info()
+            traceback.print_exc()
+            pdb.post_mortem(tb)
     else:
         sweep_id = args.sweep_id
 
         # Run wandb agent
-        wandb.agent(sweep_id, project=args.project, function=main, count=50)
+        wandb.agent(sweep_id, project=args.project, function=main, count=10)

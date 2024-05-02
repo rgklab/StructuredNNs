@@ -5,65 +5,55 @@ from torch.nn.functional import softmax
 
 
 class AdaptiveLayerNorm(nn.Module):
-    def __init__(self, gamma, wp, normalize_first=False, eps=1e-5):
+    def __init__(self, wp, eps=1e-5):
         """
         Args:
-            gamma (float) min: 0.0, max: 1.0
-                Temperature variable in standard softmax function.
-                High temperature -> smoothing effect
-                Low temperature -> basically argmax: the nodes with more incoming
-                    connections are more favoured.
             wp (float) min: 0.0, max: 1.0
                 Weight parameter that determines how much the activations are 
                 reweighted based on numbers of connections.
+            normalize_first (bool)
         """
         super().__init__()
         self.eps = eps
-        self.gamma = gamma
         self.wp = wp
-        self.normalize_first = normalize_first
         self.norm_weights = None
 
 
-    def set_norm_weights(self, mask_so_far):
+    def set_mask(self, mask_so_far):
         """
         Args:
             mask_so_far (np.ndarray)
                 The mask that has been applied from inputs to this layer, 
                 used to assign weights to the nodes during normalization.
         """
-        self.norm_weights = torch.tensor(
+        self.mask_so_far = mask_so_far
+        self.connections = torch.tensor(
             mask_so_far.sum(axis=1), dtype=torch.float32)
-        # Pass norm_weights through softmax with gamma as temperature
-        self.norm_weights = softmax(
-            self.norm_weights / self.gamma, dim=0)
         
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if self.normalize_first:
-            # Normalize the activations x via regular layer norm first
-            mean = x.mean(-1, keepdim = True)
-            var = x.var(-1, keepdim = True, unbiased=False)
-            
-            # Layer norm as usual
-            y = ((x - mean) / torch.sqrt(var + self.eps)) 
-            
-            # Reweight by number of connections if necessary
-            if self.norm_weights is not None:
-                self.norm_weights = self.norm_weights.to(y.device)
-                y =  self.wp * y * self.norm_weights + (1 - self.wp) * y
+    def forward(self, gamma, x: torch.Tensor) -> torch.Tensor:
+        """
+        gamma (float) min: 0.0, max: 1.0
+            Temperature variable (starting value) in standard softmax function.
+            High temperature -> smoothing effect
+            Low temperature -> basically argmax/one-hot: the nodes with more incoming
+                connections are more favoured.
+        """
+        # Reweight by number of conenctions first
+        if self.connections is not None:
+            self.connections = self.connections.to(x.device)
+            # Pass connections through softmax with gamma as temperature
+            self.norm_weights = softmax(
+                self.connections / gamma, dim=0)
+            # x =  self.wp * x * self.norm_weights + (1 - self.wp) * x
+            x = x * self.norm_weights
         else:
-            # Reweight by number of conenctions first
-            if self.norm_weights is not None:
-                self.norm_weights = self.norm_weights.to(x.device)
-                x =  self.wp * x * self.norm_weights + (1 - self.wp) * x
-            else:
-                raise ValueError("norm_weights must be set before forward pass.")
-            
-            # Normalize the activations x via regular layer norm second
-            mean = x.mean(-1, keepdim = True)
-            var = x.var(-1, keepdim = True, unbiased=False)
-            y = ((x - mean) / torch.sqrt(var + self.eps))
+            raise ValueError("norm_weights must be set before forward pass.")
+        
+        # Normalize the activations x via regular layer norm second
+        mean = x.mean(-1, keepdim = True)
+        var = x.var(-1, keepdim = True, unbiased=False)
+        y = ((x - mean) / torch.sqrt(var + self.eps))
 
         return y
     

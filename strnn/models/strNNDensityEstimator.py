@@ -5,6 +5,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 from strnn.models.strNN import StrNN
+from strnn.models.adaptive_layer_norm import AdaptiveLayerNorm
 from numpy.random import binomial
 
 
@@ -24,7 +25,11 @@ class StrNNDensityEstimator(StrNN):
         data_type: str = 'binary',
         init_type: str = 'ian_uniform',
         norm_type: str | None = None,
-        gamma: float | None = None,
+        init_gamma: float | None = None,
+        # min_gamma: float | None = None,
+        max_gamma: float | None = None,
+        anneal_rate: float | None = None,
+        anneal_method: str | None = None,        
         wp: float | None = None
     ):
         """
@@ -33,18 +38,30 @@ class StrNNDensityEstimator(StrNN):
         Args:
             init_type: initialization scheme for weights
             norm_type: normalization type: layer, batch, adaptive_layer
-            gamma: temperature parameter for adaptive layer normalization
+            TODO: Update doctring
         """
         super().__init__(
             nin, hidden_sizes, nout, opt_type, opt_args,
             precomputed_masks, adjacency, activation,
-            init_type, norm_type, gamma, wp
+            init_type, norm_type, init_gamma, max_gamma, anneal_rate, anneal_method, wp
         )
         assert data_type in SUPPORTED_DATA_TYPES
         self.data_type = data_type
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.net(x)
+
+    def forward(self, x: torch.Tensor, gamma: float | None = None) -> torch.Tensor:
+        """
+        Args:
+            x (torch.Tensor): input data
+            gamma (float): temperature parameter for adaptive layer normalization
+        """
+        for layer in self.net:
+            if isinstance(layer, AdaptiveLayerNorm):
+                x = layer(gamma, x)
+            else:
+                x = layer(x)
+        return x
+    
 
     def compute_LL(self, x, x_hat):
         """
@@ -57,10 +74,15 @@ class StrNNDensityEstimator(StrNN):
 
         return ll, z
 
-    def get_preds_loss(self, batch):
+    def get_preds_loss(self, batch: torch.Tensor, gamma: float | None = None):
+        """
+        Args:
+            batch (torch.Tensor): input data
+            gamma (float): temperature parameter for adaptive layer normalization
+        """
         assert self.data_type in SUPPORTED_DATA_TYPES
         x = batch
-        x_hat = self(x)
+        x_hat = self(x, gamma) # Pass gamma into forward function
 
         if self.data_type == 'binary':
             # Evaluate the binary cross entropy loss

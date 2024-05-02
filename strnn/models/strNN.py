@@ -183,8 +183,12 @@ class StrNN(nn.Module):
         activation: str = "relu",
         init_type: str = 'ian_uniform',
         norm_type: str | None = None,
-        gamma: float | None = None,
-        wp: float | None = None
+        init_gamma: float | None = None,
+        # min_gamma: float | None = None,
+        max_gamma: float | None = None,
+        anneal_rate: float | None = None,
+        anneal_method: str | None = None,
+        wp: float | None = None,
     ):
         """Initialize a Structured Neural Network (StrNN).
 
@@ -218,7 +222,11 @@ class StrNN(nn.Module):
         # Set up initialization and normalization schemes
         self.init_type = init_type
         self.norm_type = norm_type
-        self.gamma = gamma
+        self.init_gamma = init_gamma
+        # self.min_gamma = min_gamma
+        self.max_gamma = max_gamma
+        self.anneal_rate = anneal_rate
+        self.anneal_method = anneal_method
         self.wp = wp
 
         # Define StrNN network
@@ -235,7 +243,7 @@ class StrNN(nn.Module):
             elif norm_type == 'batch':
                 self.net_list.append(nn.BatchNorm1d(h1))
             elif norm_type == 'adaptive_layer':
-                self.net_list.append(AdaptiveLayerNorm(self.gamma, self.wp))
+                self.net_list.append(AdaptiveLayerNorm(self.wp))
             else:
                 if norm_type is not None:
                     raise ValueError(f"Invalid normalization type: {norm_type}")
@@ -283,6 +291,7 @@ class StrNN(nn.Module):
         Returns:
             Output of size (sample_size by output_dimensions)
         """
+        # TODO: Add gamma
         return self.net(x)
 
     def update_masks(self):
@@ -316,7 +325,7 @@ class StrNN(nn.Module):
                     mask_so_far = self.masks[mask_idx].T @ mask_so_far
                 mask_idx += 1
             elif isinstance(layer, AdaptiveLayerNorm):
-                layer.set_norm_weights(mask_so_far)
+                layer.set_mask(mask_so_far)
 
 
 

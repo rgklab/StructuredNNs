@@ -57,3 +57,7 @@ wandb/
 logs/
 experiments/synthetic_causality/output/*.pt
 scripts/
+
+*slurm-*
+experiments/citeseer/CiteSeer/CiteSeer/*
+experiments/binary_and_gaussian/synth_data_files/*
