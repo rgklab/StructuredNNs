@@ -5,17 +5,21 @@ from torch.nn.functional import softmax
 
 
 class AdaptiveLayerNorm(nn.Module):
-    def __init__(self, wp, eps=1e-5):
+    def __init__(self, wp=1.0, inverse=False, eps=1e-5):
         """
         Args:
             wp (float) min: 0.0, max: 1.0
                 Weight parameter that determines how much the activations are 
                 reweighted based on numbers of connections.
-            normalize_first (bool)
+            inverse (bool): If False (default), AdaptiveLayerNorm puts emphasis 
+                on nodes with more incoming connections.
+                If True, AdaptiveLayerNorm puts emphasis on nodes with fewer
+                incoming connections.
         """
         super().__init__()
         self.eps = eps
         self.wp = wp
+        self.inverse = inverse
         self.norm_weights = None
 
 
@@ -46,7 +50,10 @@ class AdaptiveLayerNorm(nn.Module):
             self.norm_weights = softmax(
                 self.connections / gamma, dim=0)
             # x =  self.wp * x * self.norm_weights + (1 - self.wp) * x
-            x = x * self.norm_weights
+            if self.inverse:
+                x = x / self.norm_weights
+            else:
+                x = x * self.norm_weights * self.mask_so_far.shape[0]
         else:
             raise ValueError("norm_weights must be set before forward pass.")
         

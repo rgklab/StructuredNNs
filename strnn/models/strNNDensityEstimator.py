@@ -25,6 +25,7 @@ class StrNNDensityEstimator(StrNN):
         data_type: str = 'binary',
         init_type: str = 'ian_uniform',
         norm_type: str | None = None,
+        layer_norm_inverse: bool | None = None,
         init_gamma: float | None = None,
         # min_gamma: float | None = None,
         max_gamma: float | None = None,
@@ -43,7 +44,8 @@ class StrNNDensityEstimator(StrNN):
         super().__init__(
             nin, hidden_sizes, nout, opt_type, opt_args,
             precomputed_masks, adjacency, activation,
-            init_type, norm_type, init_gamma, max_gamma, anneal_rate, anneal_method, wp
+            init_type, norm_type, layer_norm_inverse, 
+            init_gamma, max_gamma, anneal_rate, anneal_method, wp
         )
         assert data_type in SUPPORTED_DATA_TYPES
         self.data_type = data_type

@@ -183,6 +183,7 @@ class StrNN(nn.Module):
         activation: str = "relu",
         init_type: str = 'ian_uniform',
         norm_type: str | None = None,
+        layer_norm_inverse: bool | None = None,
         init_gamma: float | None = None,
         # min_gamma: float | None = None,
         max_gamma: float | None = None,
@@ -222,6 +223,7 @@ class StrNN(nn.Module):
         # Set up initialization and normalization schemes
         self.init_type = init_type
         self.norm_type = norm_type
+        self.layer_norm_inverse = layer_norm_inverse
         self.init_gamma = init_gamma
         # self.min_gamma = min_gamma
         self.max_gamma = max_gamma
@@ -243,7 +245,7 @@ class StrNN(nn.Module):
             elif norm_type == 'batch':
                 self.net_list.append(nn.BatchNorm1d(h1))
             elif norm_type == 'adaptive_layer':
-                self.net_list.append(AdaptiveLayerNorm(self.wp))
+                self.net_list.append(AdaptiveLayerNorm(self.wp, self.layer_norm_inverse))
             else:
                 if norm_type is not None:
                     raise ValueError(f"Invalid normalization type: {norm_type}")
