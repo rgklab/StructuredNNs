@@ -1,7 +1,8 @@
 import numpy as np
 import torch
-from torch.optim import AdamW
+from torch.optim import AdamW, SGD
 from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau, ExponentialLR
 import wandb
 import argparse
 
@@ -10,7 +11,7 @@ from strnn.models.strNNDensityEstimator import StrNNDensityEstimator
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-MAX_EPOCHS = 5000
+MAX_EPOCHS = 10000
 PATIENCE = 100
 
 
@@ -23,32 +24,42 @@ def start_sweep(project, sweep_name, regular=False):
             'name': sweep_name,
             'metric': {'goal': 'maximize', 'name': 'val_loss'},
             'parameters': {
-                'lr': {'values': [0.1, 0.001, 0.0001, 0.0001, 0.00001]},
+                'lr': {'values': [0.01, 0.001, 0.0001, 0.0001]},
                 'weight_decay': {'values': [0.1, 0.01, 0.001]},
                 'epsilon': {'values': [1e-8, 1e-5, 1e-2, 1e-1]},
-                'batch_size': {'values': [100, 200, 400]},
-                'num_hidden_layers': {'values': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+                'batch_size': {'values': [200, 400]},
+                'num_hidden_layers': {'values': [1, 2, 3, 4, 5, 6]},
                 'hidden_size_multiplier': {'values': [1, 2, 3, 4, 5, 6]},
+                'momentum': {'values': [0.5, 0.7, 0.9]},
+                'optimizer_type': {'values': ['SGD', 'adamw']},
+                'lr_scheduler_type': {'values': [
+                    'StepLR', 'ReduceLROnPlateau', 'ExponentialLR', 'None'
+                ]},
             }
         }
     else:
         sweep_configuration = {
-            'method': 'bayes',
+            'method': 'random',
             'name': sweep_name,
             'metric': {'goal': 'maximize', 'name': 'val_loss'},
             'parameters': {
-                'lr': {'values': [0.1, 0.001, 0.0001, 0.0001]},
+                'lr': {'values': [0.01, 0.001, 0.0001]},
                 'weight_decay': {'values': [0.1, 0.01, 0.001]},
                 'epsilon': {'values': [1e-8, 1e-5, 1e-2, 1e-1]},
-                'batch_size': {'values': [100, 200, 400]},
+                'batch_size': {'values': [200, 400]},
                 'layer_norm_inverse': {'values': [0]}, # [0, 1]
                 'init_gamma': {'values': [0.1, 0.5, 0.75, 0.9, 1.0]},
-                # 'min_gamma': {'values': [0.01, 0.05, 0.1, 0.2, 0.5]},
-                'max_gamma': {'values': [5.0, 10.0, 100.0, 200.0, 1000.0, 10000.0]},
-                'anneal_rate': {'values': [0.0001, 0.001, 0.01, 0.1]},
-                'anneal_method': {'values': ['linear', 'exponential']},
-                'num_hidden_layers': {'values': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+                'max_gamma': {'values': [1000.0, 10000.0, 100000.0]},
+                'anneal_rate': {'values': [0.001, 0.01, 0.1, 0.2, 0.5]},
+                'anneal_method': {'values': ['exponential']},
+                'num_hidden_layers': {'values': [1, 2, 3, 4, 5, 6]},
                 'hidden_size_multiplier': {'values': [1, 2, 3, 4, 5, 6]},
+                'momentum': {'values': [0.5, 0.7, 0.9]},
+                'optimizer_type': {'values': ['SGD', 'adamw']},
+                # 'lr_scheduler_type': {'values': [
+                #     'StepLR', 'ReduceLROnPlateau', 'ExponentialLR', 'None'
+                # ]},
+                'lr_scheduler_type': {'values': ['ReduceLROnPlateau', 'None']},
             }
         }
 
@@ -76,6 +87,9 @@ def main():
     # wp = wandb.config.wp
     num_hidden_layers = wandb.config.num_hidden_layers
     hidden_size_multiplier = wandb.config.hidden_size_multiplier
+    momentum = wandb.config.momentum
+    optimizer_type = wandb.config.optimizer_type
+    lr_scheduler_type = wandb.config.lr_scheduler_type
 
     # Fix random seed if necessary
     if args.model_seed is not None:
@@ -159,16 +173,37 @@ def main():
     print("Initialized model.")
 
     # Intialize optimizer
-    optimizer = AdamW(
-        model.parameters(),
-        lr=lr,
-        weight_decay=weight_decay,
-        eps=epsilon
-    )
+    if optimizer_type == 'SGD':
+        optimizer = torch.optim.SGD(
+            model.parameters(),
+            lr=lr,
+            momentum=momentum
+        )
+    elif optimizer_type == 'adamw':
+        optimizer = AdamW(
+            model.parameters(),
+            lr=lr,
+            weight_decay=weight_decay,
+            eps=epsilon
+        )
+
+    # Initialize lr scheduler 
+    if lr_scheduler_type == 'StepLR':
+        lr_scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
+    elif lr_scheduler_type == 'ReduceLROnPlateau':
+        # Defaut settings for ReduceLROnPlateau
+        lr_scheduler = ReduceLROnPlateau(
+            optimizer, mode='min', factor=0.1, patience=10)
+    elif lr_scheduler_type == 'ExponentialLR':
+        lr_scheduler = ExponentialLR(optimizer, gamma=0.99)
+    elif lr_scheduler_type == 'None':
+        lr_scheduler = None
+    else:
+        raise ValueError("Invalid lr_scheduler_type.")
 
     # Train model
     best_model_state = train_loop(
-        model, optimizer, train_dl, val_dl, MAX_EPOCHS, PATIENCE
+        model, optimizer, train_dl, val_dl, MAX_EPOCHS, PATIENCE, lr_scheduler
     )
 
 
@@ -198,4 +233,4 @@ if __name__ == "__main__":
         sweep_id = args.sweep_id
 
         # Run wandb agent
-        wandb.agent(sweep_id, project=args.project, function=main, count=20)
+        wandb.agent(sweep_id, project=args.project, function=main, count=10)

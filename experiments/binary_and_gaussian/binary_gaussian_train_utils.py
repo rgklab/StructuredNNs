@@ -46,7 +46,8 @@ def train_loop(
     train_dl: DataLoader,
     val_dl: DataLoader,
     max_epoch: int,
-    patience: int
+    patience: int,
+    lr_scheduler = None
 ) -> dict | None:
     """
     @param model
@@ -98,7 +99,12 @@ def train_loop(
             epoch_train_loss = np.mean(train_losses)
             epoch_val_loss = np.mean(val_losses)
 
-            # TODO: Add lr scheduler
+            # Increment lr scheduler
+            if lr_scheduler is not None:
+                if isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                    lr_scheduler.step(epoch_val_loss)
+                else:
+                    lr_scheduler.step()
 
             # wandb logging
             wandb.log({
@@ -108,6 +114,12 @@ def train_loop(
             # Log current temperature value
             if model.norm_type == 'adaptive_layer':
                 wandb.log({"gamma": gamma})
+            # Log learning rate if using scheduling
+            if lr_scheduler is not None:
+                wandb.log({'lr_during_training': optimizer.param_groups[0]['lr']})
+
+            if epoch % 10 == 0:
+                print(f"Epoch {epoch}: train_loss: {epoch_train_loss}, val_loss: {epoch_val_loss}")
 
             if best_val is None or epoch_val_loss < best_val:
                 best_val = epoch_val_loss
@@ -116,31 +128,24 @@ def train_loop(
             else:
                 counter += 1
                 if counter > patience:
+                    print(f"Patience reached, stopping training at epoch {epoch}.")
                     return best_model_state
                 
             # Anneal temperature parameter if using adaptive layer norm
             if model.norm_type == 'adaptive_layer':
                 if model.anneal_method == 'linear':
-                    # Anneal down from ~1 to ~0
-                    # gamma = max(
-                    #     model.min_gamma, 
-                    #     model.init_gamma - model.anneal_rate * epoch
-                    # )
                     # Anneal up
                     gamma = min(
                         model.max_gamma,
                         model.init_gamma + model.anneal_rate * epoch
                     )
                 elif model.anneal_method == 'exponential':
-                    # Anneal down
-                    # gamma = max(
-                    #     model.min_gamma, 
-                    #     model.init_gamma * np.exp(-1 * model.anneal_rate * epoch)
-                    # )
                     # Anneal up
                     gamma = min(
                         model.max_gamma,
                         model.init_gamma * np.exp(model.anneal_rate * epoch)
                     )
+
+    print("Reached max epoch, stopping training.")
 
     return best_model_state
