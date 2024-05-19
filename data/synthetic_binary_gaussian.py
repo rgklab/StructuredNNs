@@ -37,6 +37,7 @@ class DataGenerator():
                  when k=1, sequence has Markov property
             every_other: skips every other connection
             random_y: randomly zeroes out y% of the connections
+            only_first_k: each x_i depends on only the first k dimensions 
         @return: d by d adjacency matrix
         """
         if adj_type == 'full_auto':
@@ -102,6 +103,12 @@ class DataGenerator():
 
                 print("Attempt successful - random adj mtx generated!")
                 return A
+        elif 'only_first' in adj_type:
+            k = int(adj_type.split('_')[-1])
+            A = np.zeros((d, d))
+            # Set first column (except first row) to one
+            A[1:, 0] = 1
+            return A
         else:
             raise ValueError(f"{adj_type} is not a valid adj_type!")
         
@@ -184,19 +191,70 @@ class DataGenerator():
         )
 
 
+def subsample_data(
+        folder_path: str,
+        dataset_name: str, 
+        original_size: int,
+        subsample_sizes: list[int]
+    ):
+    """
+    Subsample training data and val data proportionally. Test size remains the same.
+    """
+    # Load data
+    load_data_path = f"{dataset_name}_n{original_size}.npz"
+    data = np.load(folder_path + load_data_path)
+    train_data = data['train_data']
+    val_data = data['valid_data']
+    test_data = data['test_data']
+    orig_size = train_data.shape[0] + val_data.shape[0] + test_data.shape[0]
+
+    # Subsample data
+    for size in subsample_sizes:
+        ratio = size / orig_size
+        train_size = int(train_data.shape[0] * ratio)
+        val_size = int(val_data.shape[0] * ratio)
+        # Randomly sample indices up to train_size and val_size
+        train_indices = np.random.choice(train_data.shape[0], train_size, replace=False)
+        val_indices = np.random.choice(val_data.shape[0], val_size, replace=False)
+        # Subsample data
+        train_data_sub = train_data[train_indices]
+        val_data_sub = val_data[val_indices]
+
+        # Save data
+        save_data_name = f"{dataset_name}_n{size}.npz"
+        np.savez(
+            folder_path + save_data_name,
+            train_data=train_data_sub,
+            valid_data=val_data_sub,
+            test_data=test_data
+        )
+        print(f"Subsampled data saved successfully at {save_data_name}.")
+
 
 if __name__ == '__main__':
     data_path = '../experiments/binary_and_gaussian/synth_data_files/'
     data_gen = DataGenerator(data_path)
     data_dim = 500
     num_samples = 5000
-    for sparsity_level in ['dense', 'medium-dense', 'medium', 'medium-sparse', 'sparse']:
-        adj_type = f'random_{sparsity_level}'
-        adj_mtx = data_gen.create_adjacency(data_dim, adj_type)
-        data_gen.generate_data('binary', adj_type, adj_mtx, data_dim, num_samples)
-        data_gen.save_data('binary', adj_type, data_dim, num_samples)
-        # Save adj mtx
-        np.savez(data_path + f"{adj_type}_d{str(data_dim)}_adj", adj_mtx)
-        print(f"Data saved successfully for {adj_type}.")
+    adj_type = 'only_first_1'
+    adj_mtx = data_gen.create_adjacency(data_dim, adj_type)
+    data_gen.generate_data('binary', adj_type, adj_mtx, data_dim, num_samples)
+    data_gen.save_data('binary', adj_type, data_dim, num_samples)
+    # Save adj mtx
+    np.savez(data_path + f"{adj_type}_d{str(data_dim)}_adj", adj_mtx)
+    print(f"Data saved successfully for {adj_type}.")
 
+    # for sparsity_level in ['dense', 'medium-dense', 'medium', 'medium-sparse', 'sparse']:
+    #     adj_type = f'random_{sparsity_level}'
+    #     adj_mtx = data_gen.create_adjacency(data_dim, adj_type)
+    #     data_gen.generate_data('binary', adj_type, adj_mtx, data_dim, num_samples)
+    #     data_gen.save_data('binary', adj_type, data_dim, num_samples)
+    #     # Save adj mtx
+    #     np.savez(data_path + f"{adj_type}_d{str(data_dim)}_adj", adj_mtx)
+    #     print(f"Data saved successfully for {adj_type}.")
 
+    # folder_path = '../experiments/binary_and_gaussian/synth_data_files/'
+    # dataset_name = 'binary_random_sparse_d1000'
+    # original_size = 6000
+    # subsample_sizes = [5000, 4000, 3000, 2000, 1000]
+    # subsample_data(folder_path, dataset_name, original_size, subsample_sizes)
