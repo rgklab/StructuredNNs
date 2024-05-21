@@ -62,7 +62,8 @@ def train_loop(
     best_model_state = None
     best_val = None
     counter = 0
-    gamma = model.init_gamma
+    if model.norm_type == 'adaptive_layer':
+        gamma = model.init_gamma
 
     for epoch in range(1, max_epoch):
         train_losses = []

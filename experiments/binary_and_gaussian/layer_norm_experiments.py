@@ -78,18 +78,17 @@ def main():
     weight_decay = wandb.config.weight_decay
     epsilon = wandb.config.epsilon
     batch_size = wandb.config.batch_size
-    init_gamma = wandb.config.init_gamma
-    # min_gamma = wandb.config.min_gamma
-    max_gamma = wandb.config.max_gamma
-    anneal_rate = wandb.config.anneal_rate
-    anneal_method = wandb.config.anneal_method
-    layer_norm_inverse = wandb.config.layer_norm_inverse
-    # wp = wandb.config.wp
     num_hidden_layers = wandb.config.num_hidden_layers
     hidden_size_multiplier = wandb.config.hidden_size_multiplier
     momentum = wandb.config.momentum
     optimizer_type = wandb.config.optimizer_type
     lr_scheduler_type = wandb.config.lr_scheduler_type
+    if not args.regular:
+        layer_norm_inverse = wandb.config.layer_norm_inverse
+        init_gamma = wandb.config.init_gamma
+        max_gamma = wandb.config.max_gamma
+        anneal_rate = wandb.config.anneal_rate
+        anneal_method = wandb.config.anneal_method
 
     # Fix random seed if necessary
     if args.model_seed is not None:
@@ -153,12 +152,10 @@ def main():
             init_type=init_type,
             norm_type=norm_type,
             init_gamma=init_gamma,
-            # min_gamma=min_gamma,
             max_gamma=max_gamma,
             anneal_rate=anneal_rate,
             anneal_method=anneal_method,
             layer_norm_inverse=layer_norm_inverse
-            # wp=wp
         )
     model.to(device)
     # Log init_type, opt_type, activation, norm_type, and data settings
@@ -222,7 +219,7 @@ if __name__ == "__main__":
     if args.sweep_id is None:
         try:
             # Start new sweep
-            sweep_id = start_sweep(args.project, args.sweep_name)
+            sweep_id = start_sweep(args.project, args.sweep_name, args.regular)
             print(f"Started {args.sweep_name} with id {sweep_id}.")
         except:
             import sys, pdb, traceback
@@ -233,4 +230,4 @@ if __name__ == "__main__":
         sweep_id = args.sweep_id
 
         # Run wandb agent
-        wandb.agent(sweep_id, project=args.project, function=main, count=10)
+        wandb.agent(sweep_id, project=args.project, function=main, count=50)

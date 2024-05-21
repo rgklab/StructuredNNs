@@ -2,7 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from strnn.models.adaptive_layer_norm import AdaptiveLayerNorm
+from strnn.models.strNNDensityEstimator import StrNNDensityEstimator
 import torch
+from torch.nn.functional import softmax
+
 
 
 def sample_data(h_dim, batch_size=10000):
@@ -73,6 +76,10 @@ def plot_norm_first_v_weight_first():
 
 
 def plot_diff_gammas_2D():
+    def set_labels(ax):
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+
     # Same as plot_diff_gammas_3D but in 2D
     h_dim = 2
     batch_size = 10000
@@ -87,8 +94,8 @@ def plot_diff_gammas_2D():
     # Initialize layer norm object and set mask
     layer_norm = AdaptiveLayerNorm(wp=1.0)
     layer_norm.set_mask(mask_so_far)
-    gammas = [0.1, 0.25, 0.5, 0.7, 0.8, 0.9, 1.0]
-    num_cols = len(gammas) + 1
+    gammas = [0.1, 0.5, 0.8, 0.9, 1.0, 2.0, 3.0, 5.0, 10.0]
+    num_cols = len(gammas) + 2
 
     # Initialize plot
     fig = plt.figure(figsize=(24, 3))
@@ -101,11 +108,20 @@ def plot_diff_gammas_2D():
         ax = fig.add_subplot(1, num_cols, idx + 1)
         ax.scatter(
             y[:, 0], y[:, 1],
-            c='g', marker='o', alpha=0.5, label=f'normalized'
+            c='g', marker='o', alpha=0.5, label='adaptive'
         )
         ax.set_title(f'Gamma = {gamma}')
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
+        set_labels(ax)
+
+    # Add regular layer norm results to plot
+    y = torch.nn.LayerNorm(h_dim, elementwise_affine = False)(x)
+    ax = fig.add_subplot(1, num_cols, num_cols - 1)
+    ax.scatter(
+        y[:, 0], y[:, 1],
+        c='g', marker='o', alpha=0.5, label='regular'
+    )
+    ax.set_title('Regular Layer Norm')
+    set_labels(ax)
 
     # Add original points (x) to plot
     ax = fig.add_subplot(1, num_cols, num_cols)
@@ -113,8 +129,8 @@ def plot_diff_gammas_2D():
         x[:, 0], x[:, 1],
         c='g', marker='o', alpha=0.2, label='original'
     )
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
+    ax.set_title('Original Data')
+    set_labels(ax)
 
     plt.legend()
     plt.savefig(f"layer_norm_vis_diff_gammas_2D.png")
@@ -155,7 +171,7 @@ def plot_diff_gammas_3D():
         ax = fig.add_subplot(1, num_cols, idx + 1, projection='3d')
         ax.scatter(
             y[:, 0], y[:, 1], y[:, 2],
-            c='g', marker='o', alpha=0.5, label=f'adaptive'
+            c='g', marker='o', alpha=0.5, label='adaptive'
         )
         ax.set_title(f'Gamma = {gamma}')
         set_labels(ax)
@@ -216,14 +232,23 @@ def plot_normalized_gaussian():
     plt.tight_layout()
     plt.savefig("2d_layer_norm.png")
 
-    
 
+def gradient_flow_investigation():
+    model = StrNNDensityEstimator()
+
+
+def try_gamma(gamma=1.0):
+    connections = torch.Tensor([3, 6, 6, 3])
+    norm_weights = softmax(connections / gamma, dim=0)
+    return norm_weights
 
 
 if __name__ == '__main__':
     # plot_normalized_gaussian()
-    # plot_diff_gammas_2D()
-    plot_diff_gammas_3D()
+    plot_diff_gammas_2D()
+    # plot_diff_gammas_3D()
+    # for g in [0.1, 0.5, 0.8, 0.9, 1.0, 2.0, 3.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0]:
+    #     print(f"{g}: {try_gamma(g)}")
 
 
 
